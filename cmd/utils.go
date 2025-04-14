@@ -8,6 +8,26 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Columns struct {
+	Name          string `json:"name"`
+	Type          string `json:"type"`
+	TimePrecision string `json:"timePrecision,omitempty"`
+}
+
+type CloudResults struct {
+	Offset  int       `json:"offset"`
+	Limit   int       `json:"limit"`
+	Total   int       `json:"total"`
+	Rows    [][]any   `json:"rows"`
+	Columns []Columns `json:"columns"`
+}
+
+type QueryData struct {
+	Name  string
+	Type  string
+	Value any
+}
+
 func addBasicAuth(req *http.Request) {
 	user := viper.Get("cloud_username").(string)
 	pass := viper.Get("cloud_pass").(string)

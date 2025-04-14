@@ -2,24 +2,34 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
 
-var containerName string
+var (
+	containerName string
+	offset        int
+	limit         int
+)
 
 func init() {
 	rootCmd.AddCommand(readContainerCmd)
-	readContainerCmd.Flags().StringVarP(&containerName, "containerName", "n", "", "Container Name you'd like to read from")
+	readContainerCmd.Flags().StringVarP(&containerName, "name", "n", "", "Container Name you'd like to read from")
+	readContainerCmd.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
+	readContainerCmd.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
 	readContainerCmd.MarkFlagRequired("containerName")
 }
 
 func readContainer() {
 	client := &http.Client{}
-	convert := []byte("{   \"offset\" : 0,   \"limit\": 100 }")
+	convert := []byte(
+		"{   \"offset\" : " + strconv.Itoa(offset) + ",   \"limit\": " + strconv.Itoa(limit) + "}",
+	)
 	buf := bytes.NewBuffer(convert)
 
 	req, err := makeNewRequest("POST", "/containers/"+containerName+"/rows", buf)
@@ -38,7 +48,49 @@ func readContainer() {
 	if err != nil {
 		fmt.Println("Error with reading body! ", err)
 	}
-	fmt.Println(string(body))
+	parseBody(body)
+}
+
+func parseBody(body []byte) {
+	var results CloudResults
+
+	if err := json.Unmarshal(body, &results); err != nil {
+		panic(err)
+	}
+	//fmt.Println(results)
+	var cols []Columns = results.Columns
+	var rows [][]any = results.Rows
+	var rowsLength int
+
+	if len(rows) > 0 {
+		rowsLength = len(rows)
+	}
+
+	//var data [][]map[string]any = make([][]map[string]any, rowsLength)
+	var data [][]QueryData = make([][]QueryData, rowsLength)
+
+	for i := range rows {
+		//	data[i] = make([]map[string]any, len(rows[i]))
+		data[i] = make([]QueryData, len(rows[i]))
+		for j := range rows[i] {
+			//	data[i][j] = make(map[string]any)
+			//data[i][j] = QueryData{}
+			//fmt.Println(data)
+			data[i][j].Name = cols[j].Name
+			data[i][j].Type = cols[j].Type
+			data[i][j].Value = rows[i][j]
+		}
+	}
+
+	//fmt.Println(data)
+
+	jso, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		fmt.Println("Error", err)
+	}
+
+	fmt.Println(string(jso))
+
 }
 
 var readContainerCmd = &cobra.Command{
