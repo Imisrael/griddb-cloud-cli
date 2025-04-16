@@ -10,46 +10,23 @@ import (
 	"griddb.net/griddb-cloud-cli/cmd"
 )
 
-var (
-	sqlString string
-	sqlType   string
-)
-
 func init() {
-	cmd.RootCmd.AddCommand(sqlCmd)
+	sqlCmd.AddCommand(queryCmd)
+	queryCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
+	queryCmd.MarkFlagRequired("string")
 }
 
-func wrapInDoubleQuotes(sqlString string) string {
-	newString := "\"" + sqlString + "\""
-	return newString
-}
-
-func getURLSuffix(sqlType string) string {
-	switch sqlType {
-	case "query":
-		return "/dml/query"
-	case "update":
-		return "/dml/update"
-	case "create":
-		return "/ddl"
-	default:
-		return "/dml/query"
-	}
-}
-
-func runSql() {
-	sqlString = wrapInDoubleQuotes(sqlString)
+func runQuery() {
 	client := &http.Client{}
 
+	sqlString = wrapInDoubleQuotes(sqlString)
 	stmt := "[{\"stmt\": " + sqlString + " }]"
 	fmt.Println(stmt)
 
 	convert := []byte(stmt)
 	buf := bytes.NewBuffer(convert)
 
-	urlSuffix := getURLSuffix(sqlType)
-	url := "/sql/" + urlSuffix
-
+	url := "/sql/dml/query"
 	req, err := cmd.MakeNewRequest("POST", url, buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
@@ -68,12 +45,13 @@ func runSql() {
 	fmt.Println(string(body))
 }
 
-var sqlCmd = &cobra.Command{
-	Use:   "sql",
-	Short: "Run a sql command",
-	Long:  "Run SQL Against your GridDB Cloud DB. Must choose whether to run DDL, DML or DDL Update",
+var queryCmd = &cobra.Command{
+	Use:     "query",
+	Short:   "Run a sql command",
+	Long:    "Run a DML Sql Command to Query your GridDB Container",
+	Example: "sql query -s \"SELECT * FROM pyIntPart2\"",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		runSql()
+		runQuery()
 	},
 }

@@ -10,34 +10,13 @@ import (
 	"griddb.net/griddb-cloud-cli/cmd"
 )
 
-var (
-	sqlString string
-	sqlType   string
-)
-
 func init() {
-	cmd.RootCmd.AddCommand(sqlCmd)
+	sqlCmd.AddCommand(createCmd)
+	createCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
+	createCmd.MarkFlagRequired("string")
 }
 
-func wrapInDoubleQuotes(sqlString string) string {
-	newString := "\"" + sqlString + "\""
-	return newString
-}
-
-func getURLSuffix(sqlType string) string {
-	switch sqlType {
-	case "query":
-		return "/dml/query"
-	case "update":
-		return "/dml/update"
-	case "create":
-		return "/ddl"
-	default:
-		return "/dml/query"
-	}
-}
-
-func runSql() {
+func runCreate() {
 	sqlString = wrapInDoubleQuotes(sqlString)
 	client := &http.Client{}
 
@@ -47,9 +26,7 @@ func runSql() {
 	convert := []byte(stmt)
 	buf := bytes.NewBuffer(convert)
 
-	urlSuffix := getURLSuffix(sqlType)
-	url := "/sql/" + urlSuffix
-
+	url := "/sql/ddl"
 	req, err := cmd.MakeNewRequest("POST", url, buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
@@ -68,12 +45,12 @@ func runSql() {
 	fmt.Println(string(body))
 }
 
-var sqlCmd = &cobra.Command{
-	Use:   "sql",
-	Short: "Run a sql command",
-	Long:  "Run SQL Against your GridDB Cloud DB. Must choose whether to run DDL, DML or DDL Update",
+var createCmd = &cobra.Command{
+	Use:     "create",
+	Short:   "Run a sql command",
+	Long:    "Run a DDL Sql Command to Create or Alter or Update your SQL Tables",
+	Example: "\"CREATE TABLE IF NOT EXISTS pyIntPart2 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);\"",
 	Run: func(cmd *cobra.Command, args []string) {
-
-		runSql()
+		runCreate()
 	},
 }
