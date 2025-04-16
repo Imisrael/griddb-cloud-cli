@@ -13,7 +13,9 @@ import (
 func init() {
 	sqlCmd.AddCommand(queryCmd)
 	queryCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
+	queryCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Pretty print?")
 	queryCmd.MarkFlagRequired("string")
+	queryCmd.Flags().BoolVar(&raw, "raw", false, "Print raw Cloud Results?")
 }
 
 func runQuery() {
@@ -42,7 +44,14 @@ func runQuery() {
 	if err != nil {
 		fmt.Println("Error with reading body! ", err)
 	}
-	fmt.Println(string(body))
+
+	if raw {
+		fmt.Println(string(body))
+	} else {
+		parsed := prettyPrint(body, pretty)
+		fmt.Println(string(parsed))
+	}
+
 }
 
 var queryCmd = &cobra.Command{

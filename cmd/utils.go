@@ -22,6 +22,12 @@ type CloudResults struct {
 	Columns []Columns `json:"columns"`
 }
 
+type SqlResults struct {
+	ResponseSizeByte float32   `json:"responseSizeByte"`
+	Results          [][]any   `json:"results"`
+	Columns          []Columns `json:"columns"`
+}
+
 type QueryData struct {
 	Name  string
 	Type  string

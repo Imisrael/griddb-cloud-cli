@@ -16,12 +16,16 @@ import (
 var (
 	offset int
 	limit  int
+	pretty bool
+	raw    bool
 )
 
 func init() {
 	cmd.RootCmd.AddCommand(readContainerCmd)
 	readContainerCmd.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readContainerCmd.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
+	readContainerCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Pretty print?")
+	readContainerCmd.Flags().BoolVar(&raw, "raw", false, "Print raw Cloud Results?")
 }
 
 func readContainer(containerName string) {
@@ -47,10 +51,15 @@ func readContainer(containerName string) {
 	if err != nil {
 		fmt.Println("Error with reading body! ", err)
 	}
-	parseBody(body)
+	if raw {
+		fmt.Println(string(body))
+	} else {
+		parseBody(body, pretty)
+	}
+
 }
 
-func parseBody(body []byte) {
+func parseBody(body []byte, pretty bool) {
 	var results cmd.CloudResults
 
 	if err := json.Unmarshal(body, &results); err != nil {
@@ -76,12 +85,19 @@ func parseBody(body []byte) {
 		}
 	}
 
-	jso, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		fmt.Println("Error", err)
+	if pretty {
+		jso, err := json.MarshalIndent(data, "", "    ")
+		if err != nil {
+			fmt.Println("Error", err)
+		}
+		fmt.Println(string(jso))
+	} else {
+		jso, err := json.Marshal(data)
+		if err != nil {
+			fmt.Println("Error", err)
+		}
+		fmt.Println(string(jso))
 	}
-
-	fmt.Println(string(jso))
 
 }
 
