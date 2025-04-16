@@ -28,13 +28,13 @@ type QueryData struct {
 	Value any
 }
 
-func addBasicAuth(req *http.Request) {
+func AddBasicAuth(req *http.Request) {
 	user := viper.Get("cloud_username").(string)
 	pass := viper.Get("cloud_pass").(string)
 	req.SetBasicAuth(user, pass)
 }
 
-func makeNewRequest(method, endpoint string, body io.Reader) (req *http.Request, e error) {
+func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request, e error) {
 
 	url := viper.Get("url").(string)
 	req, err := http.NewRequest(method, url+endpoint, body)
@@ -43,7 +43,7 @@ func makeNewRequest(method, endpoint string, body io.Reader) (req *http.Request,
 		return req, err
 	}
 
-	addBasicAuth(req)
+	AddBasicAuth(req)
 	req.Header.Add("Content-Type", "application/json")
 	return req, nil
 }
