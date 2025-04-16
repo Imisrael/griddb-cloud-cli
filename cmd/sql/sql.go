@@ -12,11 +12,12 @@ import (
 
 var (
 	sqlString string
+	sqlType   string
 )
 
 func init() {
 	cmd.RootCmd.AddCommand(sqlCmd)
-
+	sqlCmd.Flags().StringVarP(&sqlType, "type", "t", "query", "choose what kind of SQL command you want to conduct: query, update, or create")
 	sqlCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
 	sqlCmd.MarkFlagRequired("string")
 }
@@ -24,6 +25,19 @@ func init() {
 func wrapInDoubleQuotes(sqlString string) string {
 	newString := "\"" + sqlString + "\""
 	return newString
+}
+
+func getURLSuffix(sqlType string) string {
+	switch sqlType {
+	case "query":
+		return "/dml/query"
+	case "update":
+		return "/dml/update"
+	case "create":
+		return "/ddl"
+	default:
+		return "/dml/query"
+	}
 }
 
 func runSql() {
@@ -36,7 +50,10 @@ func runSql() {
 	convert := []byte(stmt)
 	buf := bytes.NewBuffer(convert)
 
-	req, err := cmd.MakeNewRequest("POST", "/sql/dml/query", buf)
+	urlSuffix := getURLSuffix(sqlType)
+	url := "/sql/" + urlSuffix
+
+	req, err := cmd.MakeNewRequest("POST", url, buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
 	}
@@ -57,8 +74,9 @@ func runSql() {
 var sqlCmd = &cobra.Command{
 	Use:   "sql",
 	Short: "Run a sql command",
-	Long:  "Run SQL against your DB",
+	Long:  "Run SQL Against your GridDB Cloud DB. Must choose whether to run DDL, DML or DDL Update",
 	Run: func(cmd *cobra.Command, args []string) {
+
 		runSql()
 	},
 }

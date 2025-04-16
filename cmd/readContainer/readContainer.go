@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -13,20 +14,17 @@ import (
 )
 
 var (
-	containerName string
-	offset        int
-	limit         int
+	offset int
+	limit  int
 )
 
 func init() {
 	cmd.RootCmd.AddCommand(readContainerCmd)
-	readContainerCmd.Flags().StringVarP(&containerName, "name", "n", "", "Container Name you'd like to read from")
 	readContainerCmd.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readContainerCmd.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
-	readContainerCmd.MarkFlagRequired("containerName")
 }
 
-func readContainer() {
+func readContainer(containerName string) {
 	client := &http.Client{}
 	convert := []byte(
 		"{   \"offset\" : " + strconv.Itoa(offset) + ",   \"limit\": " + strconv.Itoa(limit) + "}",
@@ -67,23 +65,16 @@ func parseBody(body []byte) {
 		rowsLength = len(rows)
 	}
 
-	//var data [][]map[string]any = make([][]map[string]any, rowsLength)
 	var data [][]cmd.QueryData = make([][]cmd.QueryData, rowsLength)
 
 	for i := range rows {
-		//	data[i] = make([]map[string]any, len(rows[i]))
 		data[i] = make([]cmd.QueryData, len(rows[i]))
 		for j := range rows[i] {
-			//	data[i][j] = make(map[string]any)
-			//data[i][j] = QueryData{}
-			//fmt.Println(data)
 			data[i][j].Name = cols[j].Name
 			data[i][j].Type = cols[j].Type
 			data[i][j].Value = rows[i][j]
 		}
 	}
-
-	//fmt.Println(data)
 
 	jso, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
@@ -95,10 +86,17 @@ func parseBody(body []byte) {
 }
 
 var readContainerCmd = &cobra.Command{
-	Use:   "readContainer",
+	Use:   "read",
 	Short: "Read container",
 	Long:  "Read container and print out table",
 	Run: func(cmd *cobra.Command, args []string) {
-		readContainer()
+		if len(args) > 1 {
+			log.Fatal("you may only read from one container at a time")
+		} else if len(args) == 1 {
+			readContainer(args[0])
+		} else {
+			log.Fatal("Please include the container name you'd like to read from!")
+		}
+
 	},
 }
