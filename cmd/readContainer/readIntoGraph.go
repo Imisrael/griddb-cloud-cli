@@ -75,20 +75,30 @@ func getGraphData(containerName string) [][]cmd.QueryData {
 func graphIt(data [][]cmd.QueryData) {
 
 	var rows [][]float64 = make([][]float64, len(data))
-
+	var colNames [][]string = make([][]string, len(data))
 	for i := range data {
-		rows[i] = make([]float64, 1)
+		rows[i] = make([]float64, 0)
+		colNames[i] = make([]string, 0)
 		for j := range data[i] {
 			if data[i][j].Type == "FLOAT" || data[i][j].Type == "INTEGER" || data[i][j].Type == "DOUBLE" {
 				fmt.Println(i, j)
 				fmt.Println(data[i][j])
 				rows[i] = append(rows[i], data[i][j].Value.(float64))
+				colNames[i] = append(colNames[i], data[i][j].Name)
 			}
 		}
 	}
+	fmt.Println(colNames)
 	fmt.Println(rows)
 
-	graph := asciigraph.PlotMany(rows, asciigraph.Height(20))
+	graph := asciigraph.PlotMany(
+		rows,
+		asciigraph.Height(30),
+		asciigraph.SeriesColors(asciigraph.Red, asciigraph.Green, asciigraph.Blue, asciigraph.Pink, asciigraph.Orange),
+		asciigraph.SeriesLegends(colNames[0]...),
+		asciigraph.Caption("Series with legends"),
+		asciigraph.Width(100),
+	)
 	fmt.Println(graph)
 }
 
