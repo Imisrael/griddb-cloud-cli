@@ -12,18 +12,18 @@ import (
 
 func init() {
 	sqlCmd.AddCommand(updateCmd)
-	updateCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
+	updateCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
 	updateCmd.MarkFlagRequired("string")
 }
 
 func runUpdate() {
-	sqlString = wrapInDoubleQuotes(sqlString)
 	client := &http.Client{}
 
-	stmt := "[{\"stmt\": " + sqlString + " }]"
-	fmt.Println(stmt)
+	var s = SqlString(userSqlString)
+	s.wrapInDblQuoteAndStmt()
+	fmt.Println(s)
+	convert := []byte(s)
 
-	convert := []byte(stmt)
 	buf := bytes.NewBuffer(convert)
 
 	url := "/sql/dml/update"

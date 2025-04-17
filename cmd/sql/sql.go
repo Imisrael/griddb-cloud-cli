@@ -8,18 +8,20 @@ import (
 )
 
 var (
-	sqlString string
-	pretty    bool
-	raw       bool
+	userSqlString string
+	pretty        bool
+	raw           bool
 )
 
 func init() {
 	cmd.RootCmd.AddCommand(sqlCmd)
 }
 
-func wrapInDoubleQuotes(sqlString string) string {
-	newString := "\"" + sqlString + "\""
-	return newString
+type SqlString string
+
+func (s *SqlString) wrapInDblQuoteAndStmt() {
+	*s = "\"" + *s + "\""
+	*s = "[{\"stmt\": " + *s + " }]"
 }
 
 var sqlCmd = &cobra.Command{

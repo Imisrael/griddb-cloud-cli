@@ -12,7 +12,7 @@ import (
 
 func init() {
 	sqlCmd.AddCommand(queryCmd)
-	queryCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
+	queryCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
 	queryCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Pretty print?")
 	queryCmd.MarkFlagRequired("string")
 	queryCmd.Flags().BoolVar(&raw, "raw", false, "Print raw Cloud Results?")
@@ -21,11 +21,11 @@ func init() {
 func runQuery() {
 	client := &http.Client{}
 
-	sqlString = wrapInDoubleQuotes(sqlString)
-	stmt := "[{\"stmt\": " + sqlString + " }]"
-	fmt.Println(stmt)
+	var s SqlString = SqlString(userSqlString)
+	s.wrapInDblQuoteAndStmt()
+	fmt.Println(s)
 
-	convert := []byte(stmt)
+	convert := []byte(s)
 	buf := bytes.NewBuffer(convert)
 
 	url := "/sql/dml/query"

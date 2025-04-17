@@ -12,18 +12,18 @@ import (
 
 func init() {
 	sqlCmd.AddCommand(createCmd)
-	createCmd.Flags().StringVarP(&sqlString, "string", "s", "", "SQL STRING")
+	createCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
 	createCmd.MarkFlagRequired("string")
 }
 
 func runCreate() {
-	sqlString = wrapInDoubleQuotes(sqlString)
 	client := &http.Client{}
 
-	stmt := "[{\"stmt\": " + sqlString + " }]"
-	fmt.Println(stmt)
+	var s = SqlString(userSqlString)
+	s.wrapInDblQuoteAndStmt()
+	fmt.Println(s)
 
-	convert := []byte(stmt)
+	convert := []byte(s)
 	buf := bytes.NewBuffer(convert)
 
 	url := "/sql/ddl"
