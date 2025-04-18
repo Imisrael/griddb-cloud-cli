@@ -23,7 +23,7 @@ func init() {
 	readContainerCmd.AddCommand(readIntoGraph)
 	readIntoGraph.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readIntoGraph.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
-	readIntoGraph.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!?")
+	readIntoGraph.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!)")
 }
 
 func unfurlUserColChoice() string {
@@ -44,7 +44,7 @@ func unfurlUserColChoice() string {
 	}
 }
 
-func wrapInTqlObj(containerName string, columns ...string) string {
+func wrapInTqlObj(containerName string) string {
 
 	//EXAMPLE [{"name" : "device1", "stmt" : "select * limit 100", "columns" : ["co", "humidity"], "hasPartialExecution" : true}]
 	cols := unfurlUserColChoice()
@@ -56,7 +56,7 @@ func wrapInTqlObj(containerName string, columns ...string) string {
 func readTql(containerName string) [][]cmd.QueryData {
 	client := &http.Client{}
 
-	stmt := wrapInTqlObj(containerName, colToGraph)
+	stmt := wrapInTqlObj(containerName)
 	stmtBytes := []byte(stmt)
 	buf := bytes.NewBuffer(stmtBytes)
 
@@ -69,10 +69,18 @@ func readTql(containerName string) [][]cmd.QueryData {
 	if err != nil {
 		fmt.Println("error with client DO: ", err)
 	}
-	fmt.Println(resp.Status)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error with reading body! ", err)
+	}
+
+	if resp.StatusCode == 400 {
+		var errorMsg cmd.ErrorMsg
+		if err := json.Unmarshal(body, &errorMsg); err != nil {
+			panic(err)
+		}
+		log.Fatal("Reading Container ERROR: " + errorMsg.ErrorMessage)
 	}
 
 	var results []cmd.TQLResults

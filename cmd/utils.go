@@ -43,6 +43,12 @@ type QueryData struct {
 	Value any
 }
 
+type ErrorMsg struct {
+	Version      string `json:"version"`
+	ErrorCode    int    `json:"errorCode"`
+	ErrorMessage string `json:"errorMessage"`
+}
+
 func AddBasicAuth(req *http.Request) {
 	user := viper.Get("cloud_username").(string)
 	pass := viper.Get("cloud_pass").(string)
