@@ -74,28 +74,33 @@ func getGraphData(containerName string) [][]cmd.QueryData {
 
 func graphIt(data [][]cmd.QueryData) {
 
-	var rows [][]float64 = make([][]float64, len(data))
-	var colNames [][]string = make([][]string, len(data))
+	var m map[string][]float64 = make(map[string][]float64)
+
 	for i := range data {
-		rows[i] = make([]float64, 0)
-		colNames[i] = make([]string, 0)
 		for j := range data[i] {
 			if data[i][j].Type == "FLOAT" || data[i][j].Type == "INTEGER" || data[i][j].Type == "DOUBLE" {
-				fmt.Println(i, j)
-				fmt.Println(data[i][j])
-				rows[i] = append(rows[i], data[i][j].Value.(float64))
-				colNames[i] = append(colNames[i], data[i][j].Name)
+				//colNames[i] = data[i][j].Name
+				m[data[i][j].Name] = append(m[data[i][j].Name], data[i][j].Value.(float64))
 			}
 		}
 	}
-	fmt.Println(colNames)
-	fmt.Println(rows)
+
+	var rows [][]float64 = make([][]float64, len(m))
+	var colNames []string = make([]string, len(m))
+
+	var i int
+	for rowName, rowValue := range m {
+		rows[i] = make([]float64, len(rowValue))
+		rows[i] = rowValue
+		colNames[i] = rowName
+		i++
+	}
 
 	graph := asciigraph.PlotMany(
 		rows,
 		asciigraph.Height(30),
 		asciigraph.SeriesColors(asciigraph.Red, asciigraph.Green, asciigraph.Blue, asciigraph.Pink, asciigraph.Orange),
-		asciigraph.SeriesLegends(colNames[0]...),
+		asciigraph.SeriesLegends(colNames...),
 		asciigraph.Caption("Series with legends"),
 		asciigraph.Width(100),
 	)
