@@ -22,6 +22,15 @@ type CloudResults struct {
 	Columns []Columns `json:"columns"`
 }
 
+type TQLResults struct {
+	Offset           int       `json:"offset"`
+	Limit            int       `json:"limit"`
+	Total            int       `json:"total"`
+	ResponseSizeByte int32     `json:"responseSizeByte,omitempty"`
+	Results          [][]any   `json:"results"`
+	Columns          []Columns `json:"columns"`
+}
+
 type SqlResults struct {
 	ResponseSizeByte float32   `json:"responseSizeByte"`
 	Results          [][]any   `json:"results"`

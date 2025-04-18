@@ -14,22 +14,35 @@ import (
 	"griddb.net/griddb-cloud-cli/cmd"
 )
 
+var (
+	colToGraph string
+)
+
 func init() {
 	readContainerCmd.AddCommand(readIntoGraph)
 	readIntoGraph.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readIntoGraph.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
-	readIntoGraph.Flags().BoolVarP(&pretty, "pretty", "p", false, "Print the JSON with Indent rules")
-	readIntoGraph.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
+	readIntoGraph.Flags().StringVar(&colToGraph, "colName", "", "Which columns would you like to see charted?")
 }
 
-func getGraphData(containerName string) [][]cmd.QueryData {
-	client := &http.Client{}
-	convert := []byte(
-		"{   \"offset\" : " + strconv.Itoa(offset) + ",   \"limit\": " + strconv.Itoa(limit) + "}",
-	)
-	buf := bytes.NewBuffer(convert)
+func wrapInTqlObj(containerName string, columns ...string) string {
 
-	req, err := cmd.MakeNewRequest("POST", "/containers/"+containerName+"/rows", buf)
+	//EXAMPLE [{"name" : "device1", "stmt" : "select * limit 100", "columns" : ["co", "humidity"], "hasPartialExecution" : true}]
+	col := "null"
+	fmt.Println(columns)
+	s := "[ { \"name\": \"" + containerName + "\", \"stmt\": \"select * limit " + strconv.Itoa(limit) + "\", \"columns\": " + col + ", \"hasPartialExecution\": true }]"
+	fmt.Println(s)
+	return s
+}
+
+func readTql(containerName string) [][]cmd.QueryData {
+	client := &http.Client{}
+
+	stmt := wrapInTqlObj(containerName, "co", "humidity")
+	stmtBytes := []byte(stmt)
+	buf := bytes.NewBuffer(stmtBytes)
+
+	req, err := cmd.MakeNewRequest("POST", "/tql/", buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
 	}
@@ -38,22 +51,22 @@ func getGraphData(containerName string) [][]cmd.QueryData {
 	if err != nil {
 		fmt.Println("error with client DO: ", err)
 	}
-
 	fmt.Println(resp.Status)
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error with reading body! ", err)
 	}
-	var results cmd.CloudResults
+	fmt.Println(string(body))
+	var results []cmd.TQLResults
 
 	if err := json.Unmarshal(body, &results); err != nil {
 		panic(err)
 	}
-	var cols []cmd.Columns = results.Columns
-	var rows [][]any = results.Rows
+	var cols []cmd.Columns = results[0].Columns
+	var rows [][]any = results[0].Results
 	var rowsLength int
-
+	fmt.Println(cols)
+	fmt.Println(rows)
 	if len(rows) > 0 {
 		rowsLength = len(rows)
 	}
@@ -70,16 +83,17 @@ func getGraphData(containerName string) [][]cmd.QueryData {
 	}
 
 	return data
+
 }
 
 func graphIt(data [][]cmd.QueryData) {
 
+	fmt.Println(data)
 	var m map[string][]float64 = make(map[string][]float64)
 
 	for i := range data {
 		for j := range data[i] {
 			if data[i][j].Type == "FLOAT" || data[i][j].Type == "INTEGER" || data[i][j].Type == "DOUBLE" {
-				//colNames[i] = data[i][j].Name
 				m[data[i][j].Name] = append(m[data[i][j].Name], data[i][j].Value.(float64))
 			}
 		}
@@ -115,7 +129,7 @@ var readIntoGraph = &cobra.Command{
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")
 		} else if len(args) == 1 {
-			data := getGraphData(args[0])
+			data := readTql(args[0])
 			graphIt(data)
 		} else {
 			log.Fatal("Please include the container name you'd like to read from!")
