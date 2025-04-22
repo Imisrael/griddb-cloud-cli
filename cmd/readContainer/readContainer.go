@@ -59,37 +59,6 @@ func unfurlUserColChoice() string {
 	}
 }
 
-func readContainer(containerName string) {
-	client := &http.Client{}
-	convert := []byte(
-		"{   \"offset\" : " + strconv.Itoa(offset) + ",   \"limit\": " + strconv.Itoa(limit) + "}",
-	)
-	buf := bytes.NewBuffer(convert)
-
-	req, err := cmd.MakeNewRequest("POST", "/containers/"+containerName+"/rows", buf)
-	if err != nil {
-		fmt.Println("Error making new request", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("error with client DO: ", err)
-	}
-
-	fmt.Println(resp.Status)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error with reading body! ", err)
-	}
-	if raw {
-		fmt.Println(string(body))
-	} else {
-		parseBody(body, pretty)
-	}
-
-}
-
 func readTql(containerName string) [][]cmd.QueryData {
 	client := &http.Client{}
 
@@ -106,18 +75,11 @@ func readTql(containerName string) [][]cmd.QueryData {
 	if err != nil {
 		fmt.Println("error with client DO: ", err)
 	}
+	cmd.CheckForErrors(resp)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error with reading body! ", err)
-	}
-
-	if resp.StatusCode == 400 {
-		var errorMsg cmd.ErrorMsg
-		if err := json.Unmarshal(body, &errorMsg); err != nil {
-			panic(err)
-		}
-		log.Fatal("Reading Container ERROR: " + errorMsg.ErrorMessage)
 	}
 
 	var results []cmd.TQLResults

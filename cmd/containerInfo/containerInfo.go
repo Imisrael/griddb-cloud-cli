@@ -56,8 +56,8 @@ func getContainerInfo(containerName string) {
 }
 
 var containerInfo = &cobra.Command{
-	Use:   "containerInfo",
-	Short: "Testing the test command",
+	Use:   "info",
+	Short: "get container info ",
 	Long:  "like ya",
 	Run: func(cmd *cobra.Command, args []string) {
 		getContainerInfo(args[0])

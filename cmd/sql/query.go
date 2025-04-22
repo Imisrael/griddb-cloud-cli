@@ -38,7 +38,7 @@ func runQuery() {
 	if err != nil {
 		fmt.Println("error with client DO: ", err)
 	}
-	fmt.Println(resp.Status)
+	cmd.CheckForErrors(resp)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

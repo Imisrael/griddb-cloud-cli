@@ -2,7 +2,6 @@ package checkConnection
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/spf13/cobra"
@@ -26,13 +25,9 @@ func checkConnection() {
 		fmt.Println("error with client DO: ", err)
 	}
 
-	fmt.Println(resp.Status)
+	cmd.CheckForErrors(resp)
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error with reading body! ", err)
-	}
-	fmt.Println(string(body))
+	fmt.Println(resp.Status)
 }
 
 var checkConnectionCmd = &cobra.Command{

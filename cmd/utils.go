@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/spf13/viper"
@@ -88,4 +90,37 @@ func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request,
 	AddBasicAuth(req)
 	req.Header.Add("Content-Type", "application/json")
 	return req, nil
+}
+
+func CheckForErrors(resp *http.Response) {
+
+	if resp.StatusCode == 403 {
+		log.Fatal("(403) IP Connection Error. Is this IP Address Whitelisted?")
+	}
+
+	if resp.StatusCode > 299 {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error with reading body! ", err)
+		}
+
+		var errorMsg ErrorMsg
+
+		if err := json.Unmarshal(body, &errorMsg); err != nil {
+			panic(err)
+		}
+		if resp.StatusCode == 400 {
+			log.Fatal("400 Error: " + errorMsg.ErrorMessage)
+		} else if resp.StatusCode == 401 {
+			fmt.Println(errorMsg.ErrorMessage)
+			log.Fatal("Authentication Error. Please check your username and password in your config file ")
+		} else if resp.StatusCode == 404 {
+			log.Fatal("404 (not found) - Does this container exist?")
+		} else if resp.StatusCode == 500 {
+			log.Fatal("500 error! " + errorMsg.ErrorMessage)
+		} else {
+			log.Fatal("Unknown Error. Please try again + ")
+		}
+	}
+
 }

@@ -1,4 +1,4 @@
-package getContainers
+package listContainers
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	cmd.RootCmd.AddCommand(getContainersCmd)
+	cmd.RootCmd.AddCommand(listContainersCmd)
 }
 
 func getContainers() {
@@ -28,7 +28,7 @@ func getContainers() {
 		fmt.Println("error with client DO: ", err)
 	}
 
-	fmt.Println(resp.Status)
+	cmd.CheckForErrors(resp)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -46,8 +46,8 @@ func getContainers() {
 	}
 }
 
-var getContainersCmd = &cobra.Command{
-	Use:   "getContainers",
+var listContainersCmd = &cobra.Command{
+	Use:   "list",
 	Short: "Get a list of all of the containers",
 	Long:  "The limit is set to 100 and is not configurable",
 	Run: func(cmd *cobra.Command, args []string) {
