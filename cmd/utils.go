@@ -14,6 +14,13 @@ type Columns struct {
 	TimePrecision string `json:"timePrecision,omitempty"`
 }
 
+type ContainerInfoColumns struct {
+	Name          string   `json:"name"`
+	Type          string   `json:"type"`
+	TimePrecision string   `json:"timePrecision,omitempty"`
+	Index         []string `json:"index"`
+}
+
 type CloudResults struct {
 	Offset  int       `json:"offset"`
 	Limit   int       `json:"limit"`
@@ -41,6 +48,20 @@ type QueryData struct {
 	Name  string
 	Type  string
 	Value any
+}
+
+type ContainersList struct {
+	Names  []string `json:"names"`
+	Offset int      `json:"offset"`
+	Limit  int      `json:"limit"`
+	Total  int      `json:"total"`
+}
+
+type ContainerInfo struct {
+	ContainerName string                 `json:"container_name"`
+	ContainerType string                 `json:"container_type"`
+	RowKey        bool                   `json:"rowkey"`
+	Columns       []ContainerInfoColumns `json:"columns"`
 }
 
 type ErrorMsg struct {

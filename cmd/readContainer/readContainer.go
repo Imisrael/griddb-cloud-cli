@@ -19,6 +19,7 @@ var (
 	limit      int
 	pretty     bool
 	raw        bool
+	height     int
 	colToGraph string
 )
 

@@ -37,8 +37,8 @@ func checkConnection() {
 
 var checkConnectionCmd = &cobra.Command{
 	Use:   "checkConnection",
-	Short: "Testing the test command",
-	Long:  "like ya",
+	Short: "Test your Connection with GridDB Cloud",
+	Long:  "A response of 200 is ideal, 401 is an auth error",
 	Run: func(cmd *cobra.Command, args []string) {
 		checkConnection()
 	},

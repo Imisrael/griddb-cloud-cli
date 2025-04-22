@@ -13,6 +13,7 @@ func init() {
 	readContainerCmd.AddCommand(readIntoGraph)
 	readIntoGraph.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readIntoGraph.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
+	readIntoGraph.Flags().IntVar(&height, "height", 30, "Line Height. Default is 30, 0 is auto-scaled")
 	readIntoGraph.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!)")
 }
 
@@ -47,7 +48,7 @@ func graphIt(data [][]cmd.QueryData, containerName string) {
 
 	graph := asciigraph.PlotMany(
 		rows,
-		asciigraph.Height(0),
+		asciigraph.Height(height),
 		asciigraph.SeriesColors(asciigraph.Red, asciigraph.Green, asciigraph.Blue, asciigraph.Pink, asciigraph.Orange),
 		asciigraph.SeriesLegends(colNames...),
 		asciigraph.Caption("Col names from container "+containerName),
@@ -59,7 +60,7 @@ func graphIt(data [][]cmd.QueryData, containerName string) {
 var readIntoGraph = &cobra.Command{
 	Use:   "graph",
 	Short: "Read container",
-	Long:  "Read container and print out table",
+	Long:  "Read container and print out line graph",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")
