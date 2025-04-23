@@ -56,9 +56,10 @@ func getContainerInfo(containerName string) {
 }
 
 var containerInfo = &cobra.Command{
-	Use:   "show",
-	Short: "get container info ",
-	Long:  "Show container information from the cloud",
+	Use:     "show",
+	Short:   "get container info ",
+	Long:    "Show container information from the cloud",
+	Example: "griddb-cloud-cli show device2",
 	Run: func(cmd *cobra.Command, args []string) {
 		getContainerInfo(args[0])
 	},

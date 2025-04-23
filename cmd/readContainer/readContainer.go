@@ -26,7 +26,7 @@ var (
 func init() {
 	cmd.RootCmd.AddCommand(readContainerCmd)
 	readContainerCmd.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
-	readContainerCmd.Flags().IntVar(&limit, "limit", 100, "How many rows you'd like to limit")
+	readContainerCmd.Flags().IntVarP(&limit, "limit", "l", 100, "How many rows you'd like to limit")
 	readContainerCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Print the JSON with Indent rules")
 	readContainerCmd.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
 	readContainerCmd.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!)")
@@ -159,9 +159,10 @@ func parseBody(body []byte, pretty bool) {
 }
 
 var readContainerCmd = &cobra.Command{
-	Use:   "read",
-	Short: "Query container with TQL",
-	Long:  "Read container and print contents in json format with --pretty",
+	Use:     "read",
+	Short:   "Query container with TQL",
+	Long:    "Read container and print contents in json format with --pretty",
+	Example: "griddb-cloud-cli read device2 --limit 10 --colNames \"co, humidity, temp\" -p",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")

@@ -47,9 +47,10 @@ func getContainers() {
 }
 
 var listContainersCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Get a list of all of the containers",
-	Long:  "The limit is set to 100 and is not configurable",
+	Use:     "list",
+	Short:   "Get a list of all of the containers",
+	Long:    "The limit is set to 100 and is not configurable",
+	Example: "griddb-cloud-cli list",
 	Run: func(cmd *cobra.Command, args []string) {
 		getContainers()
 	},
