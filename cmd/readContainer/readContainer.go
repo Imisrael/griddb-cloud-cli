@@ -59,7 +59,7 @@ func unfurlUserColChoice() string {
 	}
 }
 
-func readTql(containerName string) [][]cmd.QueryData {
+func readTql(containerName string, graph bool) [][]cmd.QueryData {
 	client := &http.Client{}
 
 	stmt := wrapInTqlObj(containerName)
@@ -108,7 +108,7 @@ func readTql(containerName string) [][]cmd.QueryData {
 
 	if raw {
 		fmt.Println(string(body))
-	} else {
+	} else if !graph {
 		parseBody(body, pretty)
 	}
 
@@ -160,13 +160,13 @@ func parseBody(body []byte, pretty bool) {
 
 var readContainerCmd = &cobra.Command{
 	Use:   "read",
-	Short: "Read container",
-	Long:  "Read container and print out table",
+	Short: "Query container with TQL",
+	Long:  "Read container and print contents in json format with --pretty",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")
 		} else if len(args) == 1 {
-			readTql(args[0])
+			readTql(args[0], false)
 		} else {
 			log.Fatal("Please include the container name you'd like to read from!")
 		}

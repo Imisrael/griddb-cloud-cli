@@ -65,7 +65,7 @@ var readIntoGraph = &cobra.Command{
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")
 		} else if len(args) == 1 {
-			data := readTql(args[0])
+			data := readTql(args[0], true)
 			graphIt(data, args[0])
 		} else {
 			log.Fatal("Please include the container name you'd like to read from!")

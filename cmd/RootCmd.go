@@ -35,9 +35,6 @@ func init() {
 	viper.BindPFlag("useViper", RootCmd.PersistentFlags().Lookup("viper"))
 	viper.SetDefault("author", "israel imru <imru@fixstars.com>")
 
-	//RootCmd.AddCommand(sql)
-	//RootCmd.AddCommand(readContainerCmd)
-	//RootCmd.AddCommand(checkConnection)
 }
 
 func initConfig() {

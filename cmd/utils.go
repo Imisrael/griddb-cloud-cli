@@ -119,7 +119,7 @@ func CheckForErrors(resp *http.Response) {
 		} else if resp.StatusCode == 500 {
 			log.Fatal("500 error! " + errorMsg.ErrorMessage)
 		} else {
-			log.Fatal("Unknown Error. Please try again + ")
+			log.Fatal("Unknown Error. Please try again.  " + errorMsg.ErrorMessage)
 		}
 	}
 

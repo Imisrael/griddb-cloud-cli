@@ -32,7 +32,7 @@ func getContainerInfo(containerName string) {
 		fmt.Println("error with client DO: ", err)
 	}
 
-	fmt.Println(resp.Status)
+	cmd.CheckForErrors(resp)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -56,9 +56,9 @@ func getContainerInfo(containerName string) {
 }
 
 var containerInfo = &cobra.Command{
-	Use:   "info",
+	Use:   "show",
 	Short: "get container info ",
-	Long:  "like ya",
+	Long:  "Show container information from the cloud",
 	Run: func(cmd *cobra.Command, args []string) {
 		getContainerInfo(args[0])
 	},
