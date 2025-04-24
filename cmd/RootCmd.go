@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,7 +28,7 @@ func Execute() error {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $DIRECTORY/config/config.json)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.griddb.yaml)")
 	viper.BindPFlag("author", RootCmd.PersistentFlags().Lookup("author"))
 	viper.BindPFlag("useViper", RootCmd.PersistentFlags().Lookup("viper"))
 	viper.SetDefault("author", "israel imru <imru@fixstars.com>")
@@ -38,15 +41,18 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
+
 		// Search config in home directory with name ".cobra" (without extension).
-		viper.AddConfigPath("./config")
-		viper.SetConfigType("json")
-		viper.SetConfigName("config")
+		viper.AddConfigPath(home)
+		viper.SetConfigType("yaml")
+		viper.SetConfigName(".griddb")
 	}
 
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err == nil {
-		//fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal("Please set a config file with the --config flag or set one in the default location $HOME/.griddb.yaml")
 	}
 }

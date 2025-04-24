@@ -73,14 +73,18 @@ type ErrorMsg struct {
 }
 
 func AddBasicAuth(req *http.Request) {
-	user := viper.Get("cloud_username").(string)
-	pass := viper.Get("cloud_pass").(string)
+	user := viper.GetString("cloud_username")
+	pass := viper.GetString("cloud_pass")
 	req.SetBasicAuth(user, pass)
 }
 
 func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request, e error) {
 
-	url := viper.Get("url").(string)
+	if !(viper.IsSet("cloud_url")) {
+		log.Fatal("Please provide a `cloud_url` in your config file! You can copy this directly from your Cloud dashboard")
+	}
+
+	url := viper.GetString("cloud_url")
 	req, err := http.NewRequest(method, url+endpoint, body)
 	if err != nil {
 		fmt.Println("error with request:", err)
@@ -92,10 +96,32 @@ func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request,
 	return req, nil
 }
 
+type IP struct {
+	Query string
+}
+
+func getIP() string {
+	req, err := http.Get("http://ip-api.com/json/")
+	if err != nil {
+		return err.Error()
+	}
+	defer req.Body.Close()
+
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err.Error()
+	}
+
+	var ip IP
+	json.Unmarshal(body, &ip)
+
+	return ip.Query
+}
+
 func CheckForErrors(resp *http.Response) {
 
 	if resp.StatusCode == 403 {
-		log.Fatal("(403) IP Connection Error. Is this IP Address Whitelisted?")
+		log.Fatal("(403) IP Connection Error. Is this IP Address Whitelisted? Please consider whitelisting Ip Address: " + getIP())
 	}
 
 	if resp.StatusCode > 299 {
