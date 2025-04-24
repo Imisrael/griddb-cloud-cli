@@ -16,7 +16,7 @@ var (
 		Use:   "griddb-cloud-cli",
 		Short: "A wrapper to making HTTP Requests to your GridDB Cloud Instance",
 		Long: `A series of commands to help you manage your cloud-based DB.
-Standouts include creating a contaner and graphing one using 'read graph' and 'createContainer' respectfully`,
+Standouts include creating a container and graphing one using 'read graph' and 'create' respectfully`,
 	}
 )
 
