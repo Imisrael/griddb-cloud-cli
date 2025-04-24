@@ -120,6 +120,7 @@ func getIP() string {
 
 func CheckForErrors(resp *http.Response) {
 
+	//Separated out because a 403 results in a page with no returned body other than raw html
 	if resp.StatusCode == 403 {
 		log.Fatal("(403) IP Connection Error. Is this IP Address Whitelisted? Please consider whitelisting Ip Address: " + getIP())
 	}
