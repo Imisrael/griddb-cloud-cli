@@ -131,7 +131,7 @@ func create() {
 	}
 
 	make, err := prompt.New().Ask("Make Container? \n" + string(jsoPrettyPrint)).
-		Choose([]string{"NO", "YES"})
+		Choose([]string{"YES", "NO"})
 	CheckErr(err)
 
 	if make == "NO" {

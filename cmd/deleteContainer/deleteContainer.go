@@ -3,10 +3,14 @@ package deleteContainer
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 
+	"github.com/cqroot/prompt"
 	"github.com/spf13/cobra"
 	"griddb.net/griddb-cloud-cli/cmd"
+	"griddb.net/griddb-cloud-cli/cmd/containerInfo"
+	"griddb.net/griddb-cloud-cli/cmd/createContainer"
 )
 
 func init() {
@@ -22,27 +26,38 @@ func (c *ContainerToBeDeleted) wrapInDblQuotesAndBracket() {
 
 func deleteContainer(containerName string) {
 
-	var containerToDelete = ContainerToBeDeleted(containerName)
-	containerToDelete.wrapInDblQuotesAndBracket()
+	info := containerInfo.GetContainerInfo(containerName)
 
-	client := &http.Client{}
+	make, err := prompt.New().Ask("Delete Container? \n" + string(info)).
+		Choose([]string{"NO", "YES"})
+	createContainer.CheckErr(err)
 
-	sliceOfBytes := []byte(containerToDelete)
-	buf := bytes.NewBuffer(sliceOfBytes)
+	if make == "NO" {
+		log.Fatal("Aborting")
+	} else {
 
-	req, err := cmd.MakeNewRequest("DELETE", "/containers", buf)
-	if err != nil {
-		fmt.Println("Error making new request", err)
+		var containerToDelete = ContainerToBeDeleted(containerName)
+		containerToDelete.wrapInDblQuotesAndBracket()
+
+		client := &http.Client{}
+
+		sliceOfBytes := []byte(containerToDelete)
+		buf := bytes.NewBuffer(sliceOfBytes)
+
+		req, err := cmd.MakeNewRequest("DELETE", "/containers", buf)
+		if err != nil {
+			fmt.Println("Error making new request", err)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("error with client DO: ", err)
+		}
+
+		cmd.CheckForErrors(resp)
+
+		fmt.Println(resp.StatusCode, "Successfully Deleted")
 	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("error with client DO: ", err)
-	}
-
-	cmd.CheckForErrors(resp)
-
-	fmt.Println(resp.Status)
 }
 
 var deleteContainerCmd = &cobra.Command{

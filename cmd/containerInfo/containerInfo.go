@@ -19,7 +19,7 @@ func init() {
 	containerInfo.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
 }
 
-func getContainerInfo(containerName string) {
+func GetContainerInfo(containerName string) []byte {
 
 	client := &http.Client{}
 	req, err := cmd.MakeNewRequest("GET", "/containers/"+containerName+"/info", nil)
@@ -40,7 +40,7 @@ func getContainerInfo(containerName string) {
 	}
 	if raw {
 		fmt.Println(string(body))
-		return
+		return []byte{}
 	}
 
 	var info cmd.ContainerInfo
@@ -52,7 +52,8 @@ func getContainerInfo(containerName string) {
 	if err != nil {
 		fmt.Println("Error", err)
 	}
-	fmt.Println(string(jso))
+
+	return jso
 }
 
 var containerInfo = &cobra.Command{
@@ -61,6 +62,7 @@ var containerInfo = &cobra.Command{
 	Long:    "Show container information from the cloud",
 	Example: "griddb-cloud-cli show device2",
 	Run: func(cmd *cobra.Command, args []string) {
-		getContainerInfo(args[0])
+		json := GetContainerInfo(args[0])
+		fmt.Println(string(json))
 	},
 }
