@@ -1,0 +1,248 @@
+package ingest
+
+import (
+	"bytes"
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"slices"
+	"strconv"
+
+	"github.com/cqroot/prompt"
+	"github.com/spf13/cobra"
+	"griddb.net/griddb-cloud-cli/cmd"
+	"griddb.net/griddb-cloud-cli/cmd/containerInfo"
+	"griddb.net/griddb-cloud-cli/cmd/listContainers"
+	"griddb.net/griddb-cloud-cli/cmd/putRow"
+)
+
+func init() {
+	cmd.RootCmd.AddCommand(ingestCmd)
+}
+
+func readCSVFile(filename string) ([]byte, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func parseCSV(data []byte) (*csv.Reader, error) {
+	reader := csv.NewReader(bytes.NewReader(data))
+	return reader, nil
+}
+
+func putSingularString(arrayString, containerName string) {
+
+	fmt.Println(arrayString)
+	convert := []byte(arrayString)
+	buf := bytes.NewBuffer(convert)
+
+	client := &http.Client{}
+	req, err := cmd.MakeNewRequest("PUT", "/containers/"+containerName+"/rows", buf)
+	if err != nil {
+		fmt.Println("Error making new request", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("error with client DO: ", err)
+	}
+
+	cmd.CheckForErrors(resp)
+
+	fmt.Println(resp.Status)
+}
+
+func processCSV(reader *csv.Reader,
+	header []string,
+	containerName string,
+	indexMapping map[string]int,
+	typeMapping map[string]string,
+) {
+	//	fmt.Println(header)
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println("Error reading CSV data:", err)
+			break
+		}
+		var stringOfValues string = "[["
+		for i, field := range header {
+			//fmt.Printf("%s: %s\n", field, record[indexMapping[field]])
+			if i == 0 {
+				stringOfValues = stringOfValues + putRow.ConvertType(typeMapping[field], record[indexMapping[field]])
+			} else {
+				stringOfValues = stringOfValues + ",  " + putRow.ConvertType(typeMapping[field], record[indexMapping[field]])
+			}
+
+		}
+		stringOfValues = stringOfValues + "]]"
+		putSingularString(stringOfValues, containerName)
+	}
+}
+
+func ingest(csvName string) {
+
+	var containerName string
+	var rawInfo []byte
+	var nameToNameMatching map[string]string = make(map[string]string)
+	var indexMapping map[string]int = make(map[string]int)
+	var typeMapping map[string]string = make(map[string]string)
+
+	data, err := readCSVFile(csvName)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+	reader, err := parseCSV(data)
+	if err != nil {
+		fmt.Println("Error creating CSV reader:", err)
+		return
+	}
+	header, err := reader.Read()
+	if err != nil {
+		fmt.Println("Error reading header:", err)
+		return
+	}
+
+	//First Question: Figure out if pushing to existing container
+	exists, err := prompt.New().Ask("Does this container already exist?").
+		Choose([]string{"YES", "NO"})
+	cmd.CheckErr(err)
+
+	// 1: Yes, find existing container
+	if exists == "YES" {
+		list := listContainers.ListContainers()
+		containerName, err = prompt.New().Ask("Please select which CONTAINER you are ingesting data into").
+			Choose(list)
+		cmd.CheckErr(err)
+
+		rawInfo = containerInfo.GetContainerInfo(containerName)
+
+		correct, err := prompt.New().Ask("Is this the correct container? \n" + string(rawInfo)).
+			Choose([]string{"YES", "NO"})
+		cmd.CheckErr(err)
+
+		// 1. Making sure it's the correct container
+		if correct == "YES" {
+			fmt.Println("Great. Proceeding. Next we will match CSV headers with their respect colunm names")
+			var info cmd.ContainerInfo
+			if err := json.Unmarshal(rawInfo, &info); err != nil {
+				panic(err)
+			}
+
+			cols := info.Columns
+			var colNames []string
+			for _, val := range cols {
+				colNames = append(colNames, val.Name)
+			}
+
+			if len(header) == len(cols) {
+				var correctOrder string
+				for i, val := range cols {
+					fmt.Println(i, val.Name, header[i])
+				}
+				// Prints out the 1:1 mapping from how it already is. If true, continue as is.
+
+				correctOrder, err = prompt.New().Ask("Is the above mapping correct?").
+					Choose([]string{"YES", "NO"})
+				cmd.CheckErr(err)
+				if correctOrder == "YES" {
+					fmt.Println("Ingesting. Please wait...")
+					for i, val := range cols {
+						indexMapping[header[i]] = i
+						typeMapping[header[i]] = val.Type
+					}
+					processCSV(reader, header, containerName, indexMapping, typeMapping)
+				} else {
+					fmt.Println("We will now match eash csv header with col name, one by one")
+					clone := slices.Clone(header)
+					for i, val := range colNames {
+
+						correctOrder, err = prompt.New().Ask(strconv.Itoa(i+1) + " of " + strconv.Itoa(len(colNames)) + ": Which csv header corresponds to column: " + val).
+							Choose(clone)
+						cmd.CheckErr(err)
+
+						//not necessarily used. just to keep track
+						nameToNameMatching[val] = correctOrder
+
+						// find the current index position to match header and col and save into maps
+						idx := slices.Index(header, correctOrder)
+						indexMapping[header[i]] = idx
+						typeMapping[header[i]] = cols[idx].Type
+
+						//TODO Remove option once picked
+						// fmt.Println(clone, i, idx)
+						// clone = slices.Delete(clone, idx, idx+1)
+
+					}
+					fmt.Println(nameToNameMatching)
+					fmt.Println(indexMapping)
+					fmt.Println(typeMapping)
+				}
+
+			} else {
+				log.Fatal("Length of columns not equal to length of headers present in CSV File. Did you choose the correct CONTAINER?")
+			}
+
+		} else {
+			log.Fatal("Please try again.")
+		}
+	} else {
+
+	}
+
+	processCSV(reader, header, containerName, indexMapping, typeMapping)
+
+	// client := &http.Client{}
+	// req, err := cmd.MakeNewRequest("GET", "/containers?limit=100", nil)
+	// if err != nil {
+	// 	fmt.Println("Error making new request", err)
+	// }
+
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	fmt.Println("error with client DO: ", err)
+	// }
+
+	// cmd.CheckForErrors(resp)
+
+	// body, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	fmt.Println("Error with reading body! ", err)
+	// }
+
+	// var listOfContainers cmd.ContainersList
+
+	// if err := json.Unmarshal(body, &listOfContainers); err != nil {
+	// 	panic(err)
+	// }
+
+	// for i, name := range listOfContainers.Names {
+	// 	fmt.Println(strconv.Itoa(i) + ": " + name)
+	// }
+}
+
+var ingestCmd = &cobra.Command{
+	Use:     "ingest",
+	Short:   "Get a list of all of the containers",
+	Long:    "The limit is set to 100 and is not configurable",
+	Example: "griddb-cloud-cli list",
+	Run: func(cmd *cobra.Command, args []string) {
+		ingest(args[0])
+	},
+}

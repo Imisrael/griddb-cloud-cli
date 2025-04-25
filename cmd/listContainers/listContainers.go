@@ -15,7 +15,7 @@ func init() {
 	cmd.RootCmd.AddCommand(listContainersCmd)
 }
 
-func getContainers() {
+func ListContainers() []string {
 
 	client := &http.Client{}
 	req, err := cmd.MakeNewRequest("GET", "/containers?limit=100", nil)
@@ -41,9 +41,7 @@ func getContainers() {
 		panic(err)
 	}
 
-	for i, name := range listOfContainers.Names {
-		fmt.Println(strconv.Itoa(i) + ": " + name)
-	}
+	return listOfContainers.Names
 }
 
 var listContainersCmd = &cobra.Command{
@@ -52,6 +50,9 @@ var listContainersCmd = &cobra.Command{
 	Long:    "The limit is set to 100 and is not configurable",
 	Example: "griddb-cloud-cli list",
 	Run: func(cmd *cobra.Command, args []string) {
-		getContainers()
+		list := ListContainers()
+		for i, name := range list {
+			fmt.Println(strconv.Itoa(i) + ": " + name)
+		}
 	},
 }

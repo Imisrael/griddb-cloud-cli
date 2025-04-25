@@ -3,11 +3,9 @@ package putRow
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/cqroot/prompt"
@@ -18,17 +16,6 @@ import (
 
 func init() {
 	cmd.RootCmd.AddCommand(putRowCmd)
-}
-
-func CheckErr(err error) {
-	if err != nil {
-		if errors.Is(err, prompt.ErrUserQuit) {
-			fmt.Fprintln(os.Stderr, "Error:", err)
-			os.Exit(1)
-		} else {
-			panic(err)
-		}
-	}
 }
 
 func placeHolderVal(colType string) string {
@@ -48,7 +35,7 @@ func placeHolderVal(colType string) string {
 	}
 }
 
-func convertType(colType, val string) string {
+func ConvertType(colType, val string) string {
 	switch colType {
 
 	case "TIMESTAMP":
@@ -71,7 +58,7 @@ func convertType(colType, val string) string {
 	}
 }
 
-func interactiveContainerInfo(containerName string) string {
+func BuildPutRowContents(containerName string) string {
 
 	info := containerInfo.GetContainerInfo(containerName)
 
@@ -89,11 +76,11 @@ func interactiveContainerInfo(containerName string) string {
 	for i, cont := range cols {
 		defaultValue := placeHolderVal(cont.Type)
 		val, err := prompt.New().Ask("Column " + strconv.Itoa(i+1) + " of " + strconv.Itoa(len(cols)) + "\n Column Name: " + cont.Name + "\n Column Type: " + cont.Type).Input(defaultValue)
-		CheckErr(err)
+		cmd.CheckErr(err)
 		if i == 0 {
-			stringOfValues = stringOfValues + convertType(cont.Type, val)
+			stringOfValues = stringOfValues + ConvertType(cont.Type, val)
 		} else {
-			stringOfValues = stringOfValues + ",  " + convertType(cont.Type, val)
+			stringOfValues = stringOfValues + ",  " + ConvertType(cont.Type, val)
 		}
 
 	}
@@ -105,13 +92,13 @@ func interactiveContainerInfo(containerName string) string {
 
 func put(containerName string) {
 
-	conInfo := interactiveContainerInfo(containerName)
+	conInfo := BuildPutRowContents(containerName)
 
 	fmt.Println(conInfo)
 
 	make, err := prompt.New().Ask("Add the Following to container " + containerName + "?").
 		Choose([]string{"YES", "NO"})
-	CheckErr(err)
+	cmd.CheckErr(err)
 
 	if make == "NO" {
 		log.Fatal("Aborting")

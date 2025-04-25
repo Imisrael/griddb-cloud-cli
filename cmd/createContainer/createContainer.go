@@ -3,11 +3,9 @@ package createContainer
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/cqroot/prompt"
@@ -20,17 +18,6 @@ func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
 }
 
-func CheckErr(err error) {
-	if err != nil {
-		if errors.Is(err, prompt.ErrUserQuit) {
-			fmt.Fprintln(os.Stderr, "Error:", err)
-			os.Exit(1)
-		} else {
-			panic(err)
-		}
-	}
-}
-
 func colDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumns {
 	if numberOfCols < 1 {
 		log.Fatal("Please pick a number greater than 0 for the number of cols")
@@ -39,26 +26,26 @@ func colDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 	for i := range numberOfCols {
 
 		colName, err := prompt.New().Ask("Col name For col #" + strconv.Itoa(i+1)).Input("temperature")
-		CheckErr(err)
+		cmd.CheckErr(err)
 		var colType string
 
 		// if it's timeseries and first col, it's always set to ROWKEY=true and timestamp type
 		if timeseries && i == 0 {
 			colType, err = prompt.New().Ask("Col #" + strconv.Itoa(i+1) + "(TIMESTAMP CONTAINERS ARE LOCKED TO TIMESTAMP FOR THEIR ROWKEY)").
 				Choose([]string{"TIMESTAMP"})
-			CheckErr(err)
+			cmd.CheckErr(err)
 		} else {
 			// User inputs col type for every other scenario
 			colType, err = prompt.New().Ask("Column Type for col #" + strconv.Itoa(i+1)).
 				Choose([]string{"BOOL", "STRING", "INTEGER", "LONG", "FLOAT", "DOUBLE", "TIMESTAMP", "GEOMETRY"})
-			CheckErr(err)
+			cmd.CheckErr(err)
 		}
 
 		// if collection type and first col, you must set an index type.
 		if !timeseries && i == 0 {
 			colIndex, err := prompt.New().Ask("Column Index Type" + strconv.Itoa(i+1)).
 				Choose([]string{"none (default)", "TREE", "SPATIAL"})
-			CheckErr(err)
+			cmd.CheckErr(err)
 			var indexArr []string = make([]string, 1)
 			if colIndex == "none (default)" {
 				columnInfo[i].Index = nil
@@ -83,16 +70,16 @@ func interactiveContainerInfo() cmd.ContainerInfo {
 	var timeseries bool = false
 
 	containerName, err := prompt.New().Ask("Container Name:").Input("device2")
-	CheckErr(err)
+	cmd.CheckErr(err)
 
 	containerType, err := prompt.New().Ask("Choose:").
 		Choose([]string{"COLLECTION", "TIME_SERIES"})
-	CheckErr(err)
+	cmd.CheckErr(err)
 
 	if containerType == "COLLECTION" {
 		rk, err := prompt.New().Ask("Row Key?").
 			Choose([]string{"true", "false"})
-		CheckErr(err)
+		cmd.CheckErr(err)
 		val, err := strconv.ParseBool(rk)
 		if err != nil {
 			fmt.Println(err)
@@ -104,7 +91,7 @@ func interactiveContainerInfo() cmd.ContainerInfo {
 
 	numberOfCols, err := prompt.New().Ask("How Many Columns for this Container?").
 		Input("", input.WithInputMode(input.InputInteger))
-	CheckErr(err)
+	cmd.CheckErr(err)
 
 	numOfCols, err := strconv.Atoi(numberOfCols)
 	if err != nil {
@@ -132,7 +119,7 @@ func create() {
 
 	make, err := prompt.New().Ask("Make Container? \n" + string(jsoPrettyPrint)).
 		Choose([]string{"YES", "NO"})
-	CheckErr(err)
+	cmd.CheckErr(err)
 
 	if make == "NO" {
 		log.Fatal("Aborting")

@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/cqroot/prompt"
 	"github.com/spf13/viper"
 )
 
@@ -94,6 +97,17 @@ func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request,
 	AddBasicAuth(req)
 	req.Header.Add("Content-Type", "application/json")
 	return req, nil
+}
+
+func CheckErr(err error) {
+	if err != nil {
+		if errors.Is(err, prompt.ErrUserQuit) {
+			fmt.Fprintln(os.Stderr, "Error:", err)
+			os.Exit(1)
+		} else {
+			panic(err)
+		}
+	}
 }
 
 type IP struct {

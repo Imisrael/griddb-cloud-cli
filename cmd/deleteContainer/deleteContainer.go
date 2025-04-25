@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"griddb.net/griddb-cloud-cli/cmd"
 	"griddb.net/griddb-cloud-cli/cmd/containerInfo"
-	"griddb.net/griddb-cloud-cli/cmd/createContainer"
 )
 
 func init() {
@@ -30,7 +29,7 @@ func deleteContainer(containerName string) {
 
 	make, err := prompt.New().Ask("Delete Container? \n" + string(info)).
 		Choose([]string{"NO", "YES"})
-	createContainer.CheckErr(err)
+	cmd.CheckErr(err)
 
 	if make == "NO" {
 		log.Fatal("Aborting")
