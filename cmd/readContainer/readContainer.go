@@ -15,12 +15,13 @@ import (
 )
 
 var (
-	offset     int
-	limit      int
-	pretty     bool
-	raw        bool
-	height     int
-	colToGraph string
+	offset       int
+	limit        int
+	pretty       bool
+	raw          bool
+	showOnlyRows bool
+	height       int
+	colToGraph   string
 )
 
 func init() {
@@ -30,6 +31,7 @@ func init() {
 	readContainerCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Print the JSON with Indent rules")
 	readContainerCmd.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
 	readContainerCmd.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!)")
+	readContainerCmd.Flags().BoolVarP(&showOnlyRows, "rows", "r", false, "Just print rows with no col info")
 }
 
 func wrapInTqlObj(containerName string) string {
@@ -95,6 +97,18 @@ func readTql(containerName string, graph bool) [][]cmd.QueryData {
 		rowsLength = len(rows)
 	}
 
+	//just print the rows as indicated by the user preference
+	if showOnlyRows {
+		for _, col := range cols {
+			fmt.Printf(col.Name + ",")
+		}
+		fmt.Println("") //line break
+		for _, row := range rows {
+			fmt.Println(row)
+		}
+		return nil
+	}
+
 	var data [][]cmd.QueryData = make([][]cmd.QueryData, rowsLength)
 
 	for i := range rows {
@@ -153,6 +167,7 @@ func parseBody(body []byte, pretty bool) {
 		if err != nil {
 			fmt.Println("Error", err)
 		}
+
 		fmt.Println(string(jso))
 	}
 

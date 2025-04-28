@@ -142,6 +142,7 @@ func ColsWithKnownNames(header []string, timeseries bool) []cmd.ContainerInfoCol
 	return columnInfo
 }
 
+// Similar to the function in createContainer, but this one assumes you have the col names already from the csv file
 func containerInfoWithKnownNames(header []string) cmd.ContainerInfo {
 
 	var retVal cmd.ContainerInfo
@@ -329,9 +330,9 @@ func ingest(csvName string) {
 
 var ingestCmd = &cobra.Command{
 	Use:     "ingest",
-	Short:   "Get a list of all of the containers",
-	Long:    "The limit is set to 100 and is not configurable",
-	Example: "griddb-cloud-cli list",
+	Short:   "Ingest a `csv` file to a new or existing container",
+	Long:    "Ingesting a csv file. You decide the type mapping an placement based on the interactive CLI options",
+	Example: "griddb-cloud-cli ingest <file.csv>",
 	Run: func(cmd *cobra.Command, args []string) {
 		ingest(args[0])
 	},
