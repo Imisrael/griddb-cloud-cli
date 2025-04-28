@@ -11,11 +11,13 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/cqroot/prompt"
 	"github.com/spf13/cobra"
 	"griddb.net/griddb-cloud-cli/cmd"
 	"griddb.net/griddb-cloud-cli/cmd/containerInfo"
+	"griddb.net/griddb-cloud-cli/cmd/createContainer"
 	"griddb.net/griddb-cloud-cli/cmd/listContainers"
 	"griddb.net/griddb-cloud-cli/cmd/putRow"
 )
@@ -93,6 +95,88 @@ func processCSV(reader *csv.Reader,
 		stringOfValues = stringOfValues + "]]"
 		putSingularString(stringOfValues, containerName)
 	}
+}
+
+func ColsWithKnownNames(header []string, timeseries bool) []cmd.ContainerInfoColumns {
+
+	n := len(header)
+	var columnInfo []cmd.ContainerInfoColumns = make([]cmd.ContainerInfoColumns, n)
+	for i := range n {
+
+		var colType string
+		var err error
+
+		// if it's timeseries and first col, it's always set to ROWKEY=true and timestamp type
+		if timeseries && i == 0 {
+			colType, err = prompt.New().Ask("Col " + header[i] + "(TIMESTAMP CONTAINERS ARE LOCKED TO TIMESTAMP FOR THEIR ROWKEY)").
+				Choose([]string{"TIMESTAMP"})
+			cmd.CheckErr(err)
+		} else {
+			// User inputs col type for every other scenario
+			colType, err = prompt.New().Ask("(" + header[i] + ") Column Type").
+				Choose([]string{"BOOL", "STRING", "INTEGER", "LONG", "FLOAT", "DOUBLE", "TIMESTAMP", "GEOMETRY"})
+			cmd.CheckErr(err)
+		}
+
+		// if collection type and first col, you must set an index type.
+		if !timeseries && i == 0 {
+			colIndex, err := prompt.New().Ask("Column Index Type" + strconv.Itoa(i+1)).
+				Choose([]string{"none (default)", "TREE", "SPATIAL"})
+			cmd.CheckErr(err)
+			var indexArr []string = make([]string, 1)
+			if colIndex == "none (default)" {
+				columnInfo[i].Index = nil
+			} else {
+				indexArr[0] = colIndex
+				columnInfo[i].Index = indexArr
+			}
+
+		}
+
+		columnInfo[i].Name = header[i]
+		columnInfo[i].Type = colType
+
+	}
+	return columnInfo
+}
+
+func containerInfoWithKnownNames(header []string) cmd.ContainerInfo {
+
+	var retVal cmd.ContainerInfo
+	var rowkey bool = true
+	var timeseries bool = false
+
+	containerName, err := prompt.New().Ask("Container Name:").Input("device2")
+	cmd.CheckErr(err)
+
+	containerType, err := prompt.New().Ask("Choose:").
+		Choose([]string{"COLLECTION", "TIME_SERIES"})
+	cmd.CheckErr(err)
+
+	if containerType == "COLLECTION" {
+		rk, err := prompt.New().Ask("Row Key?").
+			Choose([]string{"true", "false"})
+		cmd.CheckErr(err)
+		val, err := strconv.ParseBool(rk)
+		if err != nil {
+			fmt.Println(err)
+		}
+		rowkey = val
+	} else {
+		timeseries = true
+	}
+
+	var colInfos []cmd.ContainerInfoColumns
+
+	colInfos = ColsWithKnownNames(header, timeseries)
+
+	retVal.ContainerName = containerName
+	retVal.ContainerType = containerType
+	retVal.RowKey = rowkey
+	retVal.Columns = colInfos
+
+	return retVal
+
 }
 
 func ingest(csvName string) {
@@ -191,8 +275,8 @@ func ingest(csvName string) {
 
 					}
 					fmt.Println(nameToNameMatching)
-					fmt.Println(indexMapping)
-					fmt.Println(typeMapping)
+					// fmt.Println(indexMapping)
+					// fmt.Println(typeMapping)
 				}
 
 			} else {
@@ -204,37 +288,28 @@ func ingest(csvName string) {
 		}
 	} else {
 
+		h := strings.Join(header, ",")
+		h = strings.Replace(h, " ", "_", 10)
+		h = strings.ToLower(h)
+		fmt.Println("Use CSV Header names as your GridDB Container Col names? \n" + h)
+		newHeader := strings.Split(h, ",")
+
+		sameNames, err := prompt.New().Ask("Y/n").
+			Choose([]string{"YES", "NO"})
+		cmd.CheckErr(err)
+
+		if sameNames == "YES" {
+			containerToMake := containerInfoWithKnownNames(newHeader)
+			createContainer.Create(containerToMake)
+		} else {
+			conInfo := createContainer.InteractiveContainerInfo(true, header)
+			fmt.Println(conInfo)
+		}
+
+		fmt.Println(sameNames)
 	}
 
 	processCSV(reader, header, containerName, indexMapping, typeMapping)
-
-	// client := &http.Client{}
-	// req, err := cmd.MakeNewRequest("GET", "/containers?limit=100", nil)
-	// if err != nil {
-	// 	fmt.Println("Error making new request", err)
-	// }
-
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	fmt.Println("error with client DO: ", err)
-	// }
-
-	// cmd.CheckForErrors(resp)
-
-	// body, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	fmt.Println("Error with reading body! ", err)
-	// }
-
-	// var listOfContainers cmd.ContainersList
-
-	// if err := json.Unmarshal(body, &listOfContainers); err != nil {
-	// 	panic(err)
-	// }
-
-	// for i, name := range listOfContainers.Names {
-	// 	fmt.Println(strconv.Itoa(i) + ": " + name)
-	// }
 }
 
 var ingestCmd = &cobra.Command{

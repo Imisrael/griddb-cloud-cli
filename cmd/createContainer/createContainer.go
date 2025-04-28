@@ -18,7 +18,7 @@ func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
 }
 
-func colDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumns {
+func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumns {
 	if numberOfCols < 1 {
 		log.Fatal("Please pick a number greater than 0 for the number of cols")
 	}
@@ -63,7 +63,7 @@ func colDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 	return columnInfo
 }
 
-func interactiveContainerInfo() cmd.ContainerInfo {
+func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 	var retVal cmd.ContainerInfo
 	var rowkey bool = true
@@ -89,15 +89,21 @@ func interactiveContainerInfo() cmd.ContainerInfo {
 		timeseries = true
 	}
 
-	numberOfCols, err := prompt.New().Ask("How Many Columns for this Container?").
-		Input("", input.WithInputMode(input.InputInteger))
-	cmd.CheckErr(err)
+	var colInfos []cmd.ContainerInfoColumns
 
-	numOfCols, err := strconv.Atoi(numberOfCols)
-	if err != nil {
-		fmt.Println("ERROR", err)
+	if ingest {
+		colInfos = ColDeclaration(len(header), timeseries)
+	} else {
+		numberOfCols, err := prompt.New().Ask("How Many Columns for this Container?").
+			Input("", input.WithInputMode(input.InputInteger))
+		cmd.CheckErr(err)
+
+		numOfCols, err := strconv.Atoi(numberOfCols)
+		if err != nil {
+			fmt.Println("ERROR", err)
+		}
+		colInfos = ColDeclaration(numOfCols, timeseries)
 	}
-	colInfos := colDeclaration(numOfCols, timeseries)
 
 	retVal.ContainerName = containerName
 	retVal.ContainerType = containerType
@@ -108,9 +114,7 @@ func interactiveContainerInfo() cmd.ContainerInfo {
 
 }
 
-func create() {
-
-	conInfo := interactiveContainerInfo()
+func Create(conInfo cmd.ContainerInfo) {
 
 	jsoPrettyPrint, err := json.MarshalIndent(conInfo, "", "    ")
 	if err != nil {
@@ -155,6 +159,9 @@ var createContainerCmd = &cobra.Command{
 	Short: "Interactive walkthrough to create a container",
 	Long:  "A series of CLI prompts to create your griddb container",
 	Run: func(cmd *cobra.Command, args []string) {
-		create()
+
+		var ingest bool = false
+		conInfo := InteractiveContainerInfo(ingest, nil)
+		Create(conInfo)
 	},
 }
