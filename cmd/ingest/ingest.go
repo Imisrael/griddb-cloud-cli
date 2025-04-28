@@ -47,11 +47,13 @@ func parseCSV(data []byte) (*csv.Reader, error) {
 func putSingularString(arrayString, containerName string) {
 
 	fmt.Println(arrayString)
+
+	url := "/containers/" + containerName + "/rows"
 	convert := []byte(arrayString)
 	buf := bytes.NewBuffer(convert)
 
 	client := &http.Client{}
-	req, err := cmd.MakeNewRequest("PUT", "/containers/"+containerName+"/rows", buf)
+	req, err := cmd.MakeNewRequest("PUT", url, buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
 	}
@@ -166,9 +168,7 @@ func containerInfoWithKnownNames(header []string) cmd.ContainerInfo {
 		timeseries = true
 	}
 
-	var colInfos []cmd.ContainerInfoColumns
-
-	colInfos = ColsWithKnownNames(header, timeseries)
+	var colInfos []cmd.ContainerInfoColumns = ColsWithKnownNames(header, timeseries)
 
 	retVal.ContainerName = containerName
 	retVal.ContainerType = containerType
@@ -179,11 +179,59 @@ func containerInfoWithKnownNames(header []string) cmd.ContainerInfo {
 
 }
 
+func mapping(
+	header, colNames []string,
+	cols []cmd.ContainerInfoColumns,
+) (map[string]int, map[string]string) {
+
+	var indexMapping map[string]int = make(map[string]int)
+	var typeMapping map[string]string = make(map[string]string)
+	var correctOrder string
+	var err error
+	for i, val := range cols {
+		fmt.Println(i, val.Name, header[i])
+	}
+	// Prints out the 1:1 mapping from how it already is. If true, continue as is.
+
+	correctOrder, err = prompt.New().Ask("Is the above mapping correct?").
+		Choose([]string{"YES", "NO"})
+	cmd.CheckErr(err)
+	if correctOrder == "YES" {
+		fmt.Println("Ingesting. Please wait...")
+		for i, val := range cols {
+			indexMapping[header[i]] = i
+			typeMapping[header[i]] = val.Type
+		}
+		return indexMapping, typeMapping
+	} else {
+		fmt.Println("We will now match eash csv header with col name, one by one")
+		clone := slices.Clone(header)
+		for i, val := range colNames {
+
+			correctOrder, err = prompt.New().Ask(strconv.Itoa(i+1) + " of " + strconv.Itoa(len(colNames)) + ": Which csv header corresponds to column: " + val).
+				Choose(clone)
+			cmd.CheckErr(err)
+
+			// find the current index position to match header and col and save into maps
+			idx := slices.Index(header, correctOrder)
+			indexMapping[header[i]] = idx
+			typeMapping[header[i]] = cols[idx].Type
+
+			//TODO Remove option once picked
+			// fmt.Println(clone, i, idx)
+			// clone = slices.Delete(clone, idx, idx+1)
+
+		}
+		// fmt.Println(indexMapping)
+		// fmt.Println(typeMapping)
+		return indexMapping, typeMapping
+	}
+}
+
 func ingest(csvName string) {
 
 	var containerName string
 	var rawInfo []byte
-	var nameToNameMatching map[string]string = make(map[string]string)
 	var indexMapping map[string]int = make(map[string]int)
 	var typeMapping map[string]string = make(map[string]string)
 
@@ -236,49 +284,7 @@ func ingest(csvName string) {
 			}
 
 			if len(header) == len(cols) {
-				var correctOrder string
-				for i, val := range cols {
-					fmt.Println(i, val.Name, header[i])
-				}
-				// Prints out the 1:1 mapping from how it already is. If true, continue as is.
-
-				correctOrder, err = prompt.New().Ask("Is the above mapping correct?").
-					Choose([]string{"YES", "NO"})
-				cmd.CheckErr(err)
-				if correctOrder == "YES" {
-					fmt.Println("Ingesting. Please wait...")
-					for i, val := range cols {
-						indexMapping[header[i]] = i
-						typeMapping[header[i]] = val.Type
-					}
-					processCSV(reader, header, containerName, indexMapping, typeMapping)
-				} else {
-					fmt.Println("We will now match eash csv header with col name, one by one")
-					clone := slices.Clone(header)
-					for i, val := range colNames {
-
-						correctOrder, err = prompt.New().Ask(strconv.Itoa(i+1) + " of " + strconv.Itoa(len(colNames)) + ": Which csv header corresponds to column: " + val).
-							Choose(clone)
-						cmd.CheckErr(err)
-
-						//not necessarily used. just to keep track
-						nameToNameMatching[val] = correctOrder
-
-						// find the current index position to match header and col and save into maps
-						idx := slices.Index(header, correctOrder)
-						indexMapping[header[i]] = idx
-						typeMapping[header[i]] = cols[idx].Type
-
-						//TODO Remove option once picked
-						// fmt.Println(clone, i, idx)
-						// clone = slices.Delete(clone, idx, idx+1)
-
-					}
-					fmt.Println(nameToNameMatching)
-					// fmt.Println(indexMapping)
-					// fmt.Println(typeMapping)
-				}
-
+				indexMapping, typeMapping = mapping(header, colNames, cols)
 			} else {
 				log.Fatal("Length of columns not equal to length of headers present in CSV File. Did you choose the correct CONTAINER?")
 			}
@@ -288,6 +294,7 @@ func ingest(csvName string) {
 		}
 	} else {
 
+		// User will walk through creating new container to ingest into since it doesn't exist
 		h := strings.Join(header, ",")
 		h = strings.Replace(h, " ", "_", 10)
 		h = strings.ToLower(h)
@@ -298,15 +305,23 @@ func ingest(csvName string) {
 			Choose([]string{"YES", "NO"})
 		cmd.CheckErr(err)
 
+		var containerToMake cmd.ContainerInfo
 		if sameNames == "YES" {
-			containerToMake := containerInfoWithKnownNames(newHeader)
+			containerToMake = containerInfoWithKnownNames(newHeader)
 			createContainer.Create(containerToMake)
 		} else {
-			conInfo := createContainer.InteractiveContainerInfo(true, header)
-			fmt.Println(conInfo)
+			containerToMake = createContainer.InteractiveContainerInfo(true, header)
+			createContainer.Create(containerToMake)
 		}
+		fmt.Println("Container Created. Starting Ingest")
 
-		fmt.Println(sameNames)
+		cols := containerToMake.Columns
+		containerName = containerToMake.ContainerName
+		var colNames []string
+		for _, val := range cols {
+			colNames = append(colNames, val.Name)
+		}
+		indexMapping, typeMapping = mapping(header, colNames, cols)
 	}
 
 	processCSV(reader, header, containerName, indexMapping, typeMapping)
