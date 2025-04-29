@@ -43,16 +43,12 @@ func ConvertType(colType, val string) string {
 
 	case "TIMESTAMP":
 		layout := "2006-01-02T15:04:05.700Z"
-		//layout := time.RFC3339Nano
-		//layout := "2006-01-02T15:04:05"
 		var formatted string
 		if val == "now()" {
-
 			current_time := time.Now()
 			formatted = current_time.Format(layout)
 		} else {
 			if cmd.CheckIfUnixTime(val) {
-
 				t := cmd.ConvertUnixToTime(val)
 				formatted = t.Format(layout)
 			} else {
@@ -61,8 +57,8 @@ func ConvertType(colType, val string) string {
 				if err != nil {
 					log.Fatal("Error parsing your time unit: ", err)
 				}
-				tiempo := t.Unix()
-				newTime := cmd.ConvertUnixToTimeInt(tiempo)
+				timeInint := t.Unix()
+				newTime := cmd.ConvertUnixToTimeInt(timeInint)
 				formatted = newTime.Format(layout)
 			}
 		}
