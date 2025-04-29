@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/cqroot/prompt"
 	"github.com/spf13/viper"
@@ -164,4 +167,43 @@ func CheckForErrors(resp *http.Response) {
 		}
 	}
 
+}
+
+func CheckIfUnixTime(unixString string) bool {
+	if _, err := strconv.ParseFloat(unixString, 64); err == nil {
+		return true
+	} else {
+		return false
+	}
+
+}
+
+func ConvertUnixToTime(unixString string) time.Time {
+
+	// --- Separate the float into integer (seconds) and fractional parts ---
+
+	// math.Modf splits floatTimestamp into its integer and fractional parts.
+	// For 1594512094.3859746:
+	// secFloat will be 1594512094.0
+	// fracSeconds will be 0.3859746...
+	floatTimestamp, err := strconv.ParseFloat(unixString, 64)
+	if err != nil {
+		log.Fatal("Error converting to float64")
+	}
+	secFloat, fracSeconds := math.Modf(floatTimestamp)
+	sec := int64(secFloat)
+
+	// Convert the fractional part of seconds into nanoseconds.
+	// 1 second = 1,000,000,000 (or 1e9) nanoseconds.
+	// nsec = 0.3859746 * 1e9 = 385974600 (approximately, due to float precision)
+	nsec := int64(fracSeconds * 1e9) // nsec = 385974600
+
+	// --- Create the time.Time object ---
+
+	// time.Unix creates a time.Time object from seconds and nanoseconds
+	// since the epoch (January 1, 1970 UTC).
+	// The resulting time will be in the UTC timezone.
+	t := time.Unix(sec, nsec)
+
+	return t
 }

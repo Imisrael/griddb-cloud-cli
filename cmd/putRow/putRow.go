@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/cqroot/prompt"
 	"github.com/spf13/cobra"
 	"griddb.net/griddb-cloud-cli/cmd"
@@ -21,7 +23,7 @@ func init() {
 func placeHolderVal(colType string) string {
 	switch colType {
 	case "TIMESTAMP":
-		return "2016-01-16T10:25:00.253Z"
+		return "now()"
 	case "BOOL":
 		return "true"
 	case "STRING":
@@ -36,10 +38,35 @@ func placeHolderVal(colType string) string {
 }
 
 func ConvertType(colType, val string) string {
+
 	switch colType {
 
 	case "TIMESTAMP":
-		return val
+		layout := "2006-01-02T15:04:05.700Z"
+		//layout := time.RFC3339Nano
+		//layout := "2006-01-02T15:04:05"
+		var formatted string
+		if val == "now()" {
+
+			current_time := time.Now()
+			formatted = current_time.Format(layout)
+		} else {
+			if cmd.CheckIfUnixTime(val) {
+
+				t := cmd.ConvertUnixToTime(val)
+				formatted = t.Format(layout)
+			} else {
+
+				t, err := dateparse.ParseAny(val)
+				if err != nil {
+					log.Fatal("Error parsing your time unit: ", err)
+				}
+				tiempo := t.Unix()
+				newTime := cmd.ConvertUnixToTimeInt(tiempo)
+				formatted = newTime.Format(layout)
+			}
+		}
+		return "\"" + formatted + "\""
 
 	case "BOOL":
 		return val

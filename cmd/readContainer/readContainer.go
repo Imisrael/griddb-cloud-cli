@@ -102,7 +102,7 @@ func readTql(containerName string, graph bool) [][]cmd.QueryData {
 		for _, col := range cols {
 			fmt.Printf(col.Name + ",")
 		}
-		fmt.Println("") //line break
+		fmt.Printf("\n")
 		for _, row := range rows {
 			fmt.Println(row)
 		}
