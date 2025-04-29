@@ -11,6 +11,7 @@ var (
 	userSqlString string
 	pretty        bool
 	raw           bool
+	showOnlyRows  bool
 )
 
 func init() {

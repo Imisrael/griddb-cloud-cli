@@ -44,9 +44,7 @@ func parseCSV(data []byte) (*csv.Reader, error) {
 	return reader, nil
 }
 
-func putSingularString(arrayString, containerName string) {
-
-	fmt.Println(arrayString)
+func putMultiRows(arrayString, containerName string) {
 
 	url := "/containers/" + containerName + "/rows"
 	convert := []byte(arrayString)
@@ -75,7 +73,8 @@ func processCSV(reader *csv.Reader,
 	typeMapping map[string]string,
 ) {
 	//	fmt.Println(header)
-
+	var idx int
+	var stringOfValues string = "["
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -84,18 +83,29 @@ func processCSV(reader *csv.Reader,
 			fmt.Println("Error reading CSV data:", err)
 			break
 		}
-		var stringOfValues string = "[["
+		if idx != 0 {
+			stringOfValues = stringOfValues + ", ["
+		}
+
 		for i, field := range header {
+
 			//fmt.Printf("%s: %s\n", field, record[indexMapping[field]])
 			if i == 0 {
 				stringOfValues = stringOfValues + putRow.ConvertType(typeMapping[field], record[indexMapping[field]])
 			} else {
 				stringOfValues = stringOfValues + ",  " + putRow.ConvertType(typeMapping[field], record[indexMapping[field]])
 			}
-
+			idx++
 		}
-		stringOfValues = stringOfValues + "]]"
-		putSingularString(stringOfValues, containerName)
+		stringOfValues = stringOfValues + "]"
+		if idx%1000 == 0 {
+			fmt.Println("Inserting 1000 rows")
+			stringOfValues = "[" + stringOfValues + "]"
+			putMultiRows(stringOfValues, containerName)
+			idx = 0
+			stringOfValues = "["
+		}
+
 	}
 }
 

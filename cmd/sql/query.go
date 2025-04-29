@@ -16,6 +16,7 @@ func init() {
 	queryCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Pretty print?")
 	queryCmd.MarkFlagRequired("string")
 	queryCmd.Flags().BoolVar(&raw, "raw", false, "Print raw Cloud Results?")
+	queryCmd.Flags().BoolVarP(&showOnlyRows, "rows", "r", false, "Just print rows with no col info")
 }
 
 func runQuery() {
@@ -48,7 +49,7 @@ func runQuery() {
 	if raw {
 		fmt.Println(string(body))
 	} else {
-		parsed := prettyPrint(body, pretty)
+		parsed := prettyPrint(body, pretty, showOnlyRows)
 		fmt.Println(string(parsed))
 	}
 

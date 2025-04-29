@@ -7,7 +7,7 @@ import (
 	"griddb.net/griddb-cloud-cli/cmd"
 )
 
-func prettyPrint(body []byte, pretty bool) []byte {
+func prettyPrint(body []byte, pretty, showOnlyRows bool) []byte {
 	var results []cmd.SqlResults
 
 	if err := json.Unmarshal(body, &results); err != nil {
@@ -31,6 +31,18 @@ func prettyPrint(body []byte, pretty bool) []byte {
 			data[i][j].Type = cols[j].Type
 			data[i][j].Value = rows[i][j]
 		}
+	}
+
+	//just print the rows as indicated by the user preference
+	if showOnlyRows {
+		for _, col := range cols {
+			fmt.Printf(col.Name + ",")
+		}
+		fmt.Printf("\n")
+		for _, row := range rows {
+			fmt.Println(row)
+		}
+		return nil
 	}
 
 	if pretty {

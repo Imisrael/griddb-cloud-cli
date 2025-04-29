@@ -110,7 +110,6 @@ func BuildPutRowContents(containerName string) string {
 
 	stringOfValues = stringOfValues + "]]"
 	return stringOfValues
-
 }
 
 func put(containerName string) {

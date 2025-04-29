@@ -22,16 +22,17 @@ var (
 	showOnlyRows bool
 	height       int
 	colToGraph   string
+	columns      []string
 )
 
 func init() {
 	cmd.RootCmd.AddCommand(readContainerCmd)
 	readContainerCmd.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readContainerCmd.Flags().IntVarP(&limit, "limit", "l", 100, "How many rows you'd like to limit")
-	readContainerCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Print the JSON with Indent rules")
+	readContainerCmd.Flags().BoolVarP(&pretty, "json", "p", false, "Print the JSON with Indent rules")
 	readContainerCmd.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
-	readContainerCmd.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!)")
 	readContainerCmd.Flags().BoolVarP(&showOnlyRows, "rows", "r", false, "Just print rows with no col info")
+	readContainerCmd.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed")
 }
 
 func wrapInTqlObj(containerName string) string {
@@ -44,17 +45,15 @@ func wrapInTqlObj(containerName string) string {
 }
 
 func unfurlUserColChoice() string {
-	if len(colToGraph) > 1 {
-		removeSpace := strings.ReplaceAll(colToGraph, " ", "")
-		turnToSlice := strings.Split(removeSpace, ",")
+	if len(columns) >= 1 {
 		s := "["
-		for _, val := range turnToSlice {
+		for _, val := range columns {
 			dblQuote := "\"" + val + "\","
 			s = s + dblQuote
 		}
 		s = strings.Trim(s, ",")
 		s = s + "]"
-		//	fmt.Println(s)
+		fmt.Println(s)
 		return s
 	} else {
 		return "null"
@@ -157,7 +156,7 @@ func parseBody(body []byte, pretty bool) {
 	}
 
 	if pretty {
-		jso, err := json.MarshalIndent(data, "", "    ")
+		jso, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
 			fmt.Println("Error", err)
 		}
@@ -167,7 +166,6 @@ func parseBody(body []byte, pretty bool) {
 		if err != nil {
 			fmt.Println("Error", err)
 		}
-
 		fmt.Println(string(jso))
 	}
 
