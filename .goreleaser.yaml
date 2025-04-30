@@ -38,6 +38,16 @@ archives:
       - goos: windows
         formats: [zip]
 
+nfpms:
+- maintainer: Carlos A Becker <root@carlosbecker.dev>
+  description: Sample project.
+  homepage: https://github.com/caarlos0/tasktimer
+  license: MIT
+  formats:
+  - deb
+  - rpm
+  - apk
+
 changelog:
   sort: asc
   filters:
