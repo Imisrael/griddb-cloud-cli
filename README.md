@@ -250,7 +250,7 @@ $ ./griddb-cloud-cli put sample1
 Container Name: sample1
 ✔ Column 1 of 2
  Column Name: ts
- Column Type: TIMESTAMP … now()
+ Column Type: TIMESTAMP … NOW()
 ✔ Column 2 of 2
  Column Name: temp
  Column Type: DOUBLE … 20.2

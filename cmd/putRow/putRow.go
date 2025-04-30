@@ -23,7 +23,7 @@ func init() {
 func placeHolderVal(colType string) string {
 	switch colType {
 	case "TIMESTAMP":
-		return "now()"
+		return "NOW()"
 	case "BOOL":
 		return "true"
 	case "STRING":
@@ -44,7 +44,7 @@ func ConvertType(colType, val string) string {
 	case "TIMESTAMP":
 		layout := "2006-01-02T15:04:05.700Z"
 		var formatted string
-		if val == "now()" {
+		if val == "now()" || val == "NOW()" {
 			current_time := time.Now()
 			formatted = current_time.Format(layout)
 		} else {

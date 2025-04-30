@@ -29,7 +29,7 @@ func init() {
 	cmd.RootCmd.AddCommand(readContainerCmd)
 	readContainerCmd.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readContainerCmd.Flags().IntVarP(&limit, "limit", "l", 100, "How many rows you'd like to limit")
-	readContainerCmd.Flags().BoolVarP(&pretty, "json", "p", false, "Print the JSON with Indent rules")
+	readContainerCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Print the JSON with Indent rules")
 	readContainerCmd.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
 	readContainerCmd.Flags().BoolVarP(&showOnlyRows, "rows", "r", false, "Just print rows with no col info")
 	readContainerCmd.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed")

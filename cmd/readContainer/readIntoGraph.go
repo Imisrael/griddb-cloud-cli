@@ -14,7 +14,7 @@ func init() {
 	readIntoGraph.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readIntoGraph.Flags().IntVarP(&limit, "limit", "l", 50, "How many rows you'd like to limit")
 	readIntoGraph.Flags().IntVar(&height, "height", 30, "Line Height. Default is 30, 0 is auto-scaled")
-	readIntoGraph.Flags().StringVar(&colToGraph, "colNames", "", "Which columns would you like to see charted (separated by commas!)")
+	readIntoGraph.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed")
 }
 
 func graphIt(data [][]cmd.QueryData, containerName string) {
