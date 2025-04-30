@@ -89,17 +89,17 @@ $ ./griddb-cloud-cli list
 }
 ```
 
-$ ./griddb-cloud-cli read device1 --limit 1 --pretty
+$ ./griddb-cloud-cli read device2 --limit 1 --pretty
 
 ```bash
-    [ { "name": "device2", "stmt": "select * limit 2", "columns": null, "hasPartialExecution": true }]
+    [ { "name": "device2", "stmt": "select * limit 1", "columns": null, "hasPartialExecution": true }]
 
 [
   [
     {
       "Name": "ts",
-      "Type": "STRING",
-      "Value": "1.5945120943859746E9"
+      "Type": "TIMESTAMP",
+      "Value": "2006-01-02T07:04:05.700Z"
     },
     {
       "Name": "device",
@@ -108,8 +108,8 @@ $ ./griddb-cloud-cli read device1 --limit 1 --pretty
     },
     {
       "Name": "co",
-      "Type": "FLOAT",
-      "Value": 0.0049559386
+      "Type": "DOUBLE",
+      "Value": 0.004955938648391245
     },
     {
       "Name": "humidity",
@@ -123,8 +123,8 @@ $ ./griddb-cloud-cli read device1 --limit 1 --pretty
     },
     {
       "Name": "lpg",
-      "Type": "FLOAT",
-      "Value": 0.0076508224
+      "Type": "DOUBLE",
+      "Value": 0.00765082227055719
     },
     {
       "Name": "motion",
@@ -133,12 +133,12 @@ $ ./griddb-cloud-cli read device1 --limit 1 --pretty
     },
     {
       "Name": "smoke",
-      "Type": "FLOAT",
-      "Value": 0.02041127
+      "Type": "DOUBLE",
+      "Value": 0.02041127012241292
     },
     {
       "Name": "temperature",
-      "Type": "FLOAT",
+      "Type": "DOUBLE",
       "Value": 22.7
     }
   ]
@@ -151,15 +151,15 @@ $ ./griddb-cloud-cli read device2 --limit 9 --rows
 [ { "name": "device2", "stmt": "select * limit 9", "columns": null, "hasPartialExecution": true }]
 
 ts,device,co,humidity,light,lpg,motion,smoke,temperature,
-[1.5945120943859746E9 b8:27:eb:bf:9d:51 0.0049559386 51 false 0.0076508224 false 0.02041127 22.7]
-[1.5945120947355676E9 00:0f:00:70:91:0a 0.0028400887 76 false 0.0051143835 false 0.013274836 19.7]
-[1.5945120980735729E9 b8:27:eb:bf:9d:51 0.0049760123 50.9 false 0.007673227 false 0.020475125 22.6]
-[1.594512099589146E9 1c:bf:ce:15:ec:4d 0.004403027 76.8 true 0.0070233373 false 0.018628225 27]
-[1.594512101761235E9 b8:27:eb:bf:9d:51 0.0049673636 50.9 false 0.0076635773 false 0.020447621 22.6]
-[1.5945121044684107E9 1c:bf:ce:15:ec:4d 0.004391004 77.9 true 0.0070094587 false 0.018588908 27]
-[1.5945121054488637E9 b8:27:eb:bf:9d:51 0.0049760253 50.9 false 0.0076732417 false 0.020475166 22.6]
-[1.594512106869076E9 00:0f:00:70:91:0a 0.0029381157 76 false 0.005241482 false 0.013627521 19.7]
-[1.5945121082753816E9 1c:bf:ce:15:ec:4d 0.0043454715 77.9 true 0.006956802 false 0.018439783 27]
+[2006-01-02T07:04:05.700Z b8:27:eb:bf:9d:51 0.004955938648391245 51 false 0.00765082227055719 false 0.02041127012241292 22.7]
+[2020-07-11T17:01:34.700Z 00:0f:00:70:91:0a 0.0028400886071015706 76 false 0.005114383400977071 false 0.013274836704851536 19.700000762939453]
+[2020-07-11T17:01:38.700Z b8:27:eb:bf:9d:51 0.004976012340421658 50.9 false 0.007673227406398091 false 0.02047512557617824 22.6]
+[2020-07-11T17:01:39.700Z 1c:bf:ce:15:ec:4d 0.004403026829699689 76.8 true 0.007023337145877314 false 0.018628225377018803 27]
+[2020-07-11T17:01:41.700Z b8:27:eb:bf:9d:51 0.004967363641908952 50.9 false 0.007663577282372411 false 0.020447620810233658 22.6]
+[2020-07-11T17:01:44.700Z 1c:bf:ce:15:ec:4d 0.004391003954583357 77.9 true 0.007009458543138704 false 0.01858890754005078 27]
+[2020-07-11T17:01:45.700Z b8:27:eb:bf:9d:51 0.004976025118224167 50.9 false 0.007673241660297752 false 0.020475166204362245 22.6]
+[2020-07-11T17:01:46.700Z 00:0f:00:70:91:0a 0.0029381156266604295 76 false 0.005241481841731117 false 0.013627521132019194 19.700000762939453]
+[2020-07-11T17:01:48.700Z 1c:bf:ce:15:ec:4d 0.004345471359573249 77.9 true 0.006956802377235561 false 0.01843978190211682 27]
 ```
 
 
