@@ -342,3 +342,40 @@ Inserting 1000 rows
 200 OK
 Inserting 1000 rows
 ```
+
+## SQL Examples
+
+
+$ ./griddb-cloud-cli sql create -s "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);"
+
+```bash
+[{"stmt": "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);" }]
+```
+
+$ ./griddb-cloud-cli sql update -s "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"
+
+```bash
+[{"stmt": "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')" }]
+[{"updatedRows":1,"status":1,"message":null,"stmt":"INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"}]
+```
+
+$ ./griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
+
+```bash
+[{"stmt": "select * from pyIntPart2 limit 1" }]
+
+[
+    [
+        {
+            "Name": "date",
+            "Type": "TIMESTAMP",
+            "Value": "2025-04-30T14:58:00.255Z"
+        },
+        {
+            "Name": "value",
+            "Type": "STRING",
+            "Value": "fourth"
+        }
+    ]
+]
+```
