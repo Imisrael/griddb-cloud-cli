@@ -243,6 +243,22 @@ $ ./griddb-cloud-cli create
 201 Created
 ```
 
+
+$ ./griddb-cloud-cli put sample1
+
+```bash
+Container Name: sample1
+✔ Column 1 of 2
+ Column Name: ts
+ Column Type: TIMESTAMP … now()
+✔ Column 2 of 2
+ Column Name: temp
+ Column Type: DOUBLE … 20.2
+[["2025-04-30T07:43:03.700Z",  20.2]]
+✔ Add the Following to container sample1? … YES
+200 OK
+```
+
 $ ./griddb-cloud-cli ingest iot_telemetry_data.csv
 
 ```bash
