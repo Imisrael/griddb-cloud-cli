@@ -422,3 +422,153 @@ Container Name: sample1
 
 You can also ingest full CSV files with this tool. It too uses an interactive prompt as there is information that needs to be set for each col, such as index position in csv and data type. Once you set those, it will ingest the data in chunks of 1000.
 
+```bash 
+
+$ griddb-cloud-cli ingest iot_telemetry_data.csv
+
+✔ Does this container already exist? … NO
+Use CSV Header names as your GridDB Container Col names? 
+ts,device,co,humidity,light,lpg,motion,smoke,temp
+✔ Y/n … YES
+✔ Container Name: … device6
+✔ Choose: … TIME_SERIES
+✔ Col ts(TIMESTAMP CONTAINERS ARE LOCKED TO TIMESTAMP FOR THEIR ROWKEY) … TIMESTAMP
+✔ (device) Column Type … STRING
+✔ (co) Column Type … DOUBLE
+✔ (humidity) Column Type … DOUBLE
+✔ (light) Column Type … BOOL
+✔ (lpg) Column Type … DOUBLE
+✔ (motion) Column Type … BOOL
+✔ (smoke) Column Type … DOUBLE
+✔ (temp) Column Type … DOUBLE
+        },
+        {
+            "name": "device",
+            "type": "STRING",
+            "index": null
+        },
+        {
+            "name": "co",
+            "type": "DOUBLE",
+            "index": null
+        },
+        {
+            "name": "humidity",
+            "type": "DOUBLE",
+            "index": null
+        },
+        {
+            "name": "light",
+            "type": "BOOL",
+            "index": null
+        },
+        {
+            "name": "lpg",
+            "type": "DOUBLE",
+            "index": null
+        },
+        {
+            "name": "motion",
+            "type": "BOOL",
+            "index": null
+        },
+        {
+            "name": "smoke",
+            "type": "DOUBLE",
+            "index": null
+        },
+        {
+            "name": "temp",
+            "type": "DOUBLE",
+            "index": null
+        }
+    ]
+} … YES
+{"container_name":"device6","container_type":"TIME_SERIES","rowkey":true,"columns":[{"name":"ts","type":"TIMESTAMP","index":null},{"name":"device","type":"STRING","index":null},{"name":"co","type":"DOUBLE","index":null},{"name":"humidity","type":"DOUBLE","index":null},{"name":"light","type":"BOOL","index":null},{"name":"lpg","type":"DOUBLE","index":null},{"name":"motion","type":"BOOL","index":null},{"name":"smoke","type":"DOUBLE","index":null},{"name":"temp","type":"DOUBLE","index":null}]}
+201 Created
+
+Container Created. Starting Ingest
+
+0 ts ts
+1 device device
+2 co co
+3 humidity humidity
+4 light light
+5 lpg lpg
+6 motion motion
+7 smoke smoke
+8 temp temp
+✔ Is the above mapping correct? … YES
+Ingesting. Please wait...
+Inserting 1000 rows
+200 OK
+Inserting 1000 rows
+200 OK
+Inserting 1000 rows
+```
+
+Notice here, in this example, it asks if the container exists in your DB yet. If you select NO, it will create the container for you as shown above. But if you select YES, it will allow you to pick the container from your list and then map the proper indices, and then ingest that way -- handy!
+
+#### SQL Commands
+
+Sometimes you will need to use SQL because its flexibility and for its ability to use and manipulate partitioned tables. There are three subcommands you can use which follow the `sql` command: create, update, query. Let's walk through each one (and yes, they are *exactly* what they sound like).
+
+As a note, you will need to include the `-s` string with every command (it stands for string, it just represents the raw sql string).
+
+First, let's create a new partitioned table: 
+
+`griddb-cloud-cli sql query -s `
+
+```bash
+$ griddb-cloud-cli sql create -s "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);"
+
+[{"stmt": "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);" }]
+```
+
+Now we have our table. Now let's push some data into it: 
+
+`griddb-cloud-cli sql update -s `
+
+```bash 
+$ griddb-cloud-cli sql update -s "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"
+
+[{"stmt": "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')" }]
+[{"updatedRows":1,"status":1,"message":null,"stmt":"INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"}]
+```
+
+And then read from it: 
+
+`griddb-cloud-cli sql query -s`
+
+```bash
+$ griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
+
+[{"stmt": "select * from pyIntPart2 limit 1" }]
+
+[
+    [
+        {
+            "Name": "date",
+            "Type": "TIMESTAMP",
+            "Value": "2025-04-30T14:58:00.255Z"
+        },
+        {
+            "Name": "value",
+            "Type": "STRING",
+            "Value": "fourth"
+        }
+    ]
+]
+```
+
+And as explained above, the `read` command uses TQL under the hood, which does not have access to  partitioned tables, so your use of read will fail on this particular table: 
+
+```bash
+$ griddb-cloud-cli read pyIntPart2
+
+2025/04/30 09:09:41 400 Error: [151001:TQ_SYNTAX_ERROR_EXECUTION] Partial/Distribute TQL does not support order by and selection expression except for '*' (address=172.25.23.69:10001, partitionId=27) (containerName=pyIntPart2)
+```
+
+## Conclusion
+
+We hope that the GridDB Cloud CLI tool will be helpful and we hope this article showcased its strengths adequately! 
