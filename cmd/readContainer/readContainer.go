@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -32,7 +32,7 @@ func init() {
 	readContainerCmd.Flags().BoolVarP(&pretty, "pretty", "p", false, "Print the JSON with Indent rules")
 	readContainerCmd.Flags().BoolVar(&raw, "raw", false, "When enabled, will simply output direct results from GridDB Cloud")
 	readContainerCmd.Flags().BoolVarP(&showOnlyRows, "rows", "r", false, "Just print rows with no col info")
-	readContainerCmd.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed")
+	readContainerCmd.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed, IMPORTANT: no spaces between col names, just a comma like this: 'col1,col2,col3'")
 }
 
 func wrapInTqlObj(containerName string) string {
@@ -175,7 +175,7 @@ var readContainerCmd = &cobra.Command{
 	Use:     "read",
 	Short:   "Query container with TQL",
 	Long:    "Read container and print contents in json format with --pretty",
-	Example: "griddb-cloud-cli read device2 --limit 10 --colNames \"co, humidity, temp\" -p",
+	Example: "griddb-cloud-cli read device2 --limit 10 --columns \"co, humidity, temp\" -p",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")

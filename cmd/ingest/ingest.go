@@ -13,13 +13,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cqroot/prompt"
-	"github.com/spf13/cobra"
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/containerInfo"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/createContainer"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/listContainers"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/putRow"
+	"github.com/cqroot/prompt"
+	"github.com/spf13/cobra"
 )
 
 func init() {

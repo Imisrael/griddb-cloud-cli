@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/cqroot/prompt"
 	"github.com/cqroot/prompt/input"
 	"github.com/spf13/cobra"
-	"github.com/Imisrael/griddb-cloud-cli/cmd"
 )
 
 func init() {

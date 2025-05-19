@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cqroot/prompt"
-	"github.com/spf13/cobra"
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/containerInfo"
+	"github.com/cqroot/prompt"
+	"github.com/spf13/cobra"
 )
 
 func init() {

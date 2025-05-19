@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
+	"github.com/Imisrael/griddb-cloud-cli/cmd/containerInfo"
 	"github.com/araddon/dateparse"
 	"github.com/cqroot/prompt"
 	"github.com/spf13/cobra"
-	"github.com/Imisrael/griddb-cloud-cli/cmd"
-	"github.com/Imisrael/griddb-cloud-cli/cmd/containerInfo"
 )
 
 func init() {

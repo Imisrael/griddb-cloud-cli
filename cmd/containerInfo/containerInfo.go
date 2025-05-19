@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/spf13/cobra"
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
+	"github.com/spf13/cobra"
 )
 
 var (

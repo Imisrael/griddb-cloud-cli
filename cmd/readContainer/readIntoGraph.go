@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/guptarohit/asciigraph"
 	"github.com/spf13/cobra"
-	"github.com/Imisrael/griddb-cloud-cli/cmd"
 )
 
 func init() {
@@ -14,7 +14,7 @@ func init() {
 	readIntoGraph.Flags().IntVar(&offset, "offset", 0, "How many rows you'd like to offset in your query")
 	readIntoGraph.Flags().IntVarP(&limit, "limit", "l", 50, "How many rows you'd like to limit")
 	readIntoGraph.Flags().IntVar(&height, "height", 30, "Line Height. Default is 30, 0 is auto-scaled")
-	readIntoGraph.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed")
+	readIntoGraph.Flags().StringSliceVar(&columns, "columns", []string{}, "Which columns would you like to see printed, IMPORTANT: no spaces between col names, just a comma like this: 'col1,col2,col3'")
 }
 
 func graphIt(data [][]cmd.QueryData, containerName string) {
@@ -61,7 +61,7 @@ var readIntoGraph = &cobra.Command{
 	Use:     "graph",
 	Short:   "Read container",
 	Long:    "Read container and print out line graph",
-	Example: "griddb-cloud-cli read device2 --limit 50 --colNames \"co, humidity, temp\" --height 0",
+	Example: "griddb-cloud-cli read graph device2 --limit 50 --columns \"co,humidity,temp\" --height 0",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 1 {
 			log.Fatal("you may only read from one container at a time")
