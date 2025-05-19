@@ -15,11 +15,11 @@ import (
 
 	"github.com/cqroot/prompt"
 	"github.com/spf13/cobra"
-	"griddb.net/griddb-cloud-cli/cmd"
-	"griddb.net/griddb-cloud-cli/cmd/containerInfo"
-	"griddb.net/griddb-cloud-cli/cmd/createContainer"
-	"griddb.net/griddb-cloud-cli/cmd/listContainers"
-	"griddb.net/griddb-cloud-cli/cmd/putRow"
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
+	"github.com/Imisrael/griddb-cloud-cli/cmd/containerInfo"
+	"github.com/Imisrael/griddb-cloud-cli/cmd/createContainer"
+	"github.com/Imisrael/griddb-cloud-cli/cmd/listContainers"
+	"github.com/Imisrael/griddb-cloud-cli/cmd/putRow"
 )
 
 func init() {

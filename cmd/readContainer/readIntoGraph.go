@@ -6,7 +6,7 @@ import (
 
 	"github.com/guptarohit/asciigraph"
 	"github.com/spf13/cobra"
-	"griddb.net/griddb-cloud-cli/cmd"
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
 )
 
 func init() {

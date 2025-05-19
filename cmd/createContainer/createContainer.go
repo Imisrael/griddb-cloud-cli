@@ -11,7 +11,7 @@ import (
 	"github.com/cqroot/prompt"
 	"github.com/cqroot/prompt/input"
 	"github.com/spf13/cobra"
-	"griddb.net/griddb-cloud-cli/cmd"
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
 )
 
 func init() {

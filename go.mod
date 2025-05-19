@@ -1,4 +1,4 @@
-module griddb.net/griddb-cloud-cli
+module github.com/Imisrael/griddb-cloud-cli
 
 go 1.23.1
 

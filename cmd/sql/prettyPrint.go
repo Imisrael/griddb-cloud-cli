@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"griddb.net/griddb-cloud-cli/cmd"
+	"github.com/Imisrael/griddb-cloud-cli/cmd"
 )
 
 func prettyPrint(body []byte, pretty, showOnlyRows bool) []byte {
