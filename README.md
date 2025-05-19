@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/Imisrael/griddb-cloud-cli)](https://goreportcard.com/report/github.com/Imisrael/griddb-cloud-cli)
+
 A simple CLI tool wrapper for making HTTP Requests to your GridDB Cloud instance.
 
 ## Getting Started
