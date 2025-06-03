@@ -56,6 +56,26 @@ func GetContainerInfo(containerName string) []byte {
 	return jso
 }
 
+func ContainerExists(containerName string) bool {
+	client := &http.Client{}
+	req, err := cmd.MakeNewRequest("GET", "/containers/"+containerName+"/info", nil)
+	if err != nil {
+		fmt.Println("Error making new request", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("error with client DO: ", err)
+	}
+
+	if resp.StatusCode == 404 {
+		return false
+	} else {
+		cmd.CheckForErrors(resp)
+		return true
+	}
+}
+
 var containerInfo = &cobra.Command{
 	Use:     "show",
 	Short:   "get container info ",

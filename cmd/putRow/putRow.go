@@ -81,6 +81,34 @@ func ConvertType(colType, val string) string {
 	}
 }
 
+func BuildPutRowStrNonInteractive(containerName string, values []string) string {
+
+	info := containerInfo.GetContainerInfo(containerName)
+
+	var containerInfo cmd.ContainerInfo
+	var cols []cmd.ContainerInfoColumns
+	if err := json.Unmarshal(info, &containerInfo); err != nil {
+		panic(err)
+	}
+	cols = containerInfo.Columns
+
+	var stringOfValues string = "[["
+
+	fmt.Println("Container Name: " + containerName)
+
+	for i, cont := range cols {
+		if i == 0 {
+			stringOfValues = stringOfValues + ConvertType(cont.Type, "now()")
+		} else {
+			stringOfValues = stringOfValues + ",  " + ConvertType(cont.Type, values[i])
+		}
+
+	}
+
+	stringOfValues = stringOfValues + "]]"
+	return stringOfValues
+}
+
 func BuildPutRowContents(containerName string) string {
 
 	info := containerInfo.GetContainerInfo(containerName)

@@ -14,6 +14,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var griddbTypes = []string{
+	"BOOL",
+	"STRING",
+	"INTEGER",
+	"LONG",
+	"FLOAT",
+	"DOUBLE",
+	"TIMESTAMP",
+	"GEOMETRY",
+}
+
 func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
 }
@@ -37,7 +48,7 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 		} else {
 			// User inputs col type for every other scenario
 			colType, err = prompt.New().Ask("Column Type for col #" + strconv.Itoa(i+1)).
-				Choose([]string{"BOOL", "STRING", "INTEGER", "LONG", "FLOAT", "DOUBLE", "TIMESTAMP", "GEOMETRY"})
+				Choose(griddbTypes)
 			cmd.CheckErr(err)
 		}
 

@@ -11,6 +11,7 @@ import (
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/putRow"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/readContainer"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/sql"
+	_ "github.com/Imisrael/griddb-cloud-cli/cmd/fluentd"
 )
 
 func main() {

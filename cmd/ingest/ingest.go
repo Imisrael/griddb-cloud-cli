@@ -63,7 +63,7 @@ func putMultiRows(arrayString, containerName string) {
 
 	cmd.CheckForErrors(resp)
 
-	fmt.Println(resp.Status)
+	log.Println(resp.Status)
 }
 
 func processCSV(reader *csv.Reader,
