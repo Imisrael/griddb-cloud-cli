@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
@@ -155,36 +155,68 @@ func putMultiRows(arrayString, containerName string) {
 	client := &http.Client{}
 	req, err := cmd.MakeNewRequest("PUT", url, buf)
 	if err != nil {
-		fmt.Println("Error making new request", err)
+		log.Println("Error making new request", err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("error with client DO: ", err)
+		log.Println("error with client DO: ", err)
 	}
 
 	cmd.CheckForErrors(resp)
 
-	fmt.Println(resp.Status)
+	log.Println(resp.Status)
+}
+
+func buildPutRowFluentd(containerName string, values []string) string {
+
+	info := containerInfo.GetContainerInfo(containerName)
+
+	var containerInfo cmd.ContainerInfo
+	var cols []cmd.ContainerInfoColumns
+	if err := json.Unmarshal(info, &containerInfo); err != nil {
+		log.Panic(err)
+	}
+	cols = containerInfo.Columns
+
+	var stringOfValues strings.Builder
+	stringOfValues.WriteString("[[")
+
+	log.Println("Container Name: " + containerName)
+
+	log.Println("Values")
+	log.Println(values)
+	for i, cont := range cols {
+		if i == 0 {
+			stringOfValues.WriteString(putRow.ConvertType(cont.Type, "now()"))
+		} else {
+			stringOfValues.WriteString(", " + putRow.ConvertType(cont.Type, values[i]))
+		}
+
+	}
+	stringOfValues.WriteString("]]")
+	log.Println(stringOfValues.String())
+
+	return stringOfValues.String()
 }
 
 func ingest(fileName string) {
 
-	fmt.Println("Reading " + fileName)
+	log.Println("Reading " + fileName)
 
 	data, err := readTSVFile(fileName)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		log.Println("Error reading file:", err)
 		return
 	}
 	reader, err := parseTSV(data)
 	if err != nil {
-		fmt.Println("Error creating CSV reader:", err)
+		log.Println("Error creating CSV reader:", err)
 		return
 	}
 	lines, err := reader.ReadAll()
 	if err != nil {
-		fmt.Println("Error reading header:", err)
+		log.Println("Error reading header:", err)
 		return
 	}
 
@@ -193,12 +225,13 @@ func ingest(fileName string) {
 	if containerInfo.ContainerExists(containerName) {
 		for _, line := range lines {
 			log.Println("Pushing Row (Container exists!)")
-			jsonStr := putRow.BuildPutRowStrNonInteractive(containerName, line)
+			jsonStr := buildPutRowFluentd(containerName, line)
 			log.Println(jsonStr)
 			putMultiRows(jsonStr, containerName)
 		}
 
 	} else {
+		log.Println("Container does not exist! Creating now")
 		var mapOfTypes map[string]string = make(map[string]string)
 		line := lines[0]
 		log.Println(line)
@@ -210,6 +243,7 @@ func ingest(fileName string) {
 				log.Println("Val: " + val)
 				vals = append(vals, val)
 			}
+
 		}
 		log.Println(len(keys))
 		log.Println(len(vals))
@@ -230,7 +264,7 @@ func ingest(fileName string) {
 
 		for _, line := range lines {
 			log.Println("Pushing Row")
-			jsonStr := putRow.BuildPutRowStrNonInteractive(containerName, line)
+			jsonStr := buildPutRowFluentd(containerName, line)
 			log.Println(jsonStr)
 			putMultiRows(jsonStr, containerName)
 		}
