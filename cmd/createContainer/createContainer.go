@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/cqroot/prompt"
@@ -14,8 +16,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var interactive bool
+
+type ColumnSet struct {
+	ColumnName string `json:"columnName"`
+	Type       string `json:"type"`
+	NotNull    bool   `json:"notNull"`
+}
+
+type ExportProperties struct {
+	Version           string      `json:"version"`
+	Database          string      `json:"database"`
+	Container         string      `json:"container"`
+	ContainerType     string      `json:"containerType"`
+	ContainerFileType string      `json:"containerFileType"`
+	ContainerFile     []string    `json:"containerFile"`
+	ColumnSet         []ColumnSet `json:"columnSet"`
+	RowKeySet         []string    `json:"rowKeySet"`
+}
+
 func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
+	createContainerCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "When enabled, goes through interactive to make cols and types")
 }
 
 func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumns {
@@ -61,6 +83,51 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 
 	}
 	return columnInfo
+}
+
+// type ContainerInfoColumns struct {
+// 	Name          string   `json:"name"`
+// 	Type          string   `json:"type"`
+// 	TimePrecision string   `json:"timePrecision,omitempty"`
+// 	Index         []string `json:"index"`
+// }
+
+func transformToConInfoCols(colSet []ColumnSet) []cmd.ContainerInfoColumns {
+	n := len(colSet)
+	var conInfoCols = make([]cmd.ContainerInfoColumns, n)
+
+	for idx, val := range colSet {
+		conInfoCols[idx].Name = strings.ToUpper(val.ColumnName)
+		conInfoCols[idx].Type = strings.ToUpper(val.Type)
+		//conInfoCols[idx].Index = []string{}
+	}
+	return conInfoCols
+}
+
+func parseJson(args []string) cmd.ContainerInfo {
+
+	filename := args[0]
+	properties, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var exportProperties ExportProperties
+	err = json.Unmarshal(properties, &exportProperties)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(exportProperties)
+
+	var conInfo cmd.ContainerInfo
+
+	conInfo.ContainerName = exportProperties.Container
+	conInfo.ContainerType = exportProperties.ContainerType
+	conInfo.RowKey = len(exportProperties.RowKeySet) > 0
+
+	cols := transformToConInfoCols(exportProperties.ColumnSet)
+	conInfo.Columns = cols
+
+	return conInfo
 }
 
 func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
@@ -161,7 +228,13 @@ var createContainerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var ingest bool = false
-		conInfo := InteractiveContainerInfo(ingest, nil)
-		Create(conInfo)
+		if interactive {
+			conInfo := InteractiveContainerInfo(ingest, nil)
+			Create(conInfo)
+		} else {
+			conInfo := parseJson(args)
+			Create(conInfo)
+		}
+
 	},
 }
