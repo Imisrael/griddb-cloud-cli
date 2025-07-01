@@ -130,17 +130,9 @@ func transformToConInfoCols(colSet []ColumnSet) []cmd.ContainerInfoColumns {
 	return conInfoCols
 }
 
-func parseJson(args []string) cmd.ContainerInfo {
+func ParseJson(jsonName string) (cmd.ContainerInfo, []string) {
 
-	if len(args) != 1 {
-		if len(args) == 0 {
-			log.Fatal("Please add a json file as an argument")
-		} else {
-			log.Fatal("Please only select one json file at a time")
-		}
-	}
-
-	filename := args[0]
+	filename := jsonName
 	properties, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -150,7 +142,7 @@ func parseJson(args []string) cmd.ContainerInfo {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(exportProperties)
+	//fmt.Println(exportProperties)
 
 	var conInfo cmd.ContainerInfo
 
@@ -161,7 +153,7 @@ func parseJson(args []string) cmd.ContainerInfo {
 	cols := transformToConInfoCols(exportProperties.ColumnSet)
 	conInfo.Columns = cols
 
-	return conInfo
+	return conInfo, exportProperties.ContainerFile
 }
 
 func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
@@ -279,7 +271,15 @@ var createContainerCmd = &cobra.Command{
 			conInfo := InteractiveContainerInfo(ingest, nil)
 			Create(conInfo)
 		} else {
-			conInfo := parseJson(args)
+			if len(args) != 1 {
+				if len(args) == 0 {
+					log.Fatal("Please add a json file as an argument")
+				} else {
+					log.Fatal("Please only select one json file at a time")
+				}
+			}
+
+			conInfo, _ := ParseJson(args[0])
 			Create(conInfo)
 		}
 
