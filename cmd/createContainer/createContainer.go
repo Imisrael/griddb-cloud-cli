@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/cqroot/prompt"
@@ -14,8 +16,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	interactive bool
+	force       bool
+)
+
+type ColumnSet struct {
+	ColumnName string `json:"columnName"`
+	Type       string `json:"type"`
+	NotNull    bool   `json:"notNull"`
+}
+
+type ExportProperties struct {
+	Version           string      `json:"version,omitempty"`
+	Database          string      `json:"database,omitempty"`
+	Container         string      `json:"container"`
+	ContainerType     string      `json:"containerType,omitempty"`
+	ContainerFileType string      `json:"containerFileType,omitempty"`
+	ContainerFile     []string    `json:"containerFile"`
+	ColumnSet         []ColumnSet `json:"columnSet"`
+	RowKeySet         []string    `json:"rowKeySet"`
+}
+
 func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
+	createContainerCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "When enabled, goes through interactive to make cols and types")
+	createContainerCmd.Flags().BoolVarP(&force, "force", "f", false, "Force create (no prompt)")
 }
 
 func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumns {
@@ -37,7 +63,7 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 		} else {
 			// User inputs col type for every other scenario
 			colType, err = prompt.New().Ask("Column Type for col #" + strconv.Itoa(i+1)).
-				Choose([]string{"BOOL", "STRING", "INTEGER", "LONG", "FLOAT", "DOUBLE", "TIMESTAMP", "GEOMETRY"})
+				Choose(cmd.GridDBTypes)
 			cmd.CheckErr(err)
 		}
 
@@ -61,6 +87,81 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 
 	}
 	return columnInfo
+}
+
+func typeSwitcher(s string) string {
+	switch s {
+	case "boolean":
+		return "BOOL"
+	case "boolean[]":
+		return "BOOL_ARRAY"
+	case "string[]":
+		return "STRING_ARRAY"
+	case "byte[]":
+		return "BYTE_ARRAY"
+	case "short[]":
+		return "SHORT_ARRAY"
+	case "integer[]":
+		return "INTEGER_ARRAY"
+	case "long[]":
+		return "LONG_ARRAY"
+	case "float[]":
+		return "FLOAT_ARRAY"
+	case "double[]":
+		return "DOUBLE_ARRAY"
+	case "timestamp[]":
+		return "TIMESTAMP_ARRAY"
+	default:
+		return strings.ToUpper(s)
+
+	}
+
+}
+
+func transformToConInfoCols(colSet []ColumnSet) []cmd.ContainerInfoColumns {
+	n := len(colSet)
+	var conInfoCols = make([]cmd.ContainerInfoColumns, n)
+
+	for idx, val := range colSet {
+		conInfoCols[idx].Name = val.ColumnName
+		conInfoCols[idx].Type = typeSwitcher(val.Type)
+		//conInfoCols[idx].Index = []string{}
+	}
+	return conInfoCols
+}
+
+func parseJson(args []string) cmd.ContainerInfo {
+
+	if len(args) != 1 {
+		if len(args) == 0 {
+			log.Fatal("Please add a json file as an argument")
+		} else {
+			log.Fatal("Please only select one json file at a time")
+		}
+	}
+
+	filename := args[0]
+	properties, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var exportProperties ExportProperties
+	err = json.Unmarshal(properties, &exportProperties)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(exportProperties)
+
+	var conInfo cmd.ContainerInfo
+
+	conInfo.ContainerName = exportProperties.Container
+	conInfo.ContainerType = exportProperties.ContainerType
+	conInfo.RowKey = len(exportProperties.RowKeySet) > 0
+
+	cols := transformToConInfoCols(exportProperties.ColumnSet)
+	conInfo.Columns = cols
+
+	return conInfo
 }
 
 func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
@@ -116,6 +217,32 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 func Create(conInfo cmd.ContainerInfo) {
 
+	jsonContainerInfo, err := json.Marshal(conInfo)
+	if err != nil {
+		fmt.Println("Error", err)
+	}
+	fmt.Println(string(jsonContainerInfo))
+	convert := []byte(jsonContainerInfo)
+	buf := bytes.NewBuffer(convert)
+
+	client := &http.Client{}
+	req, err := cmd.MakeNewRequest("POST", "/containers", buf)
+	if err != nil {
+		fmt.Println("Error making new request", err)
+	}
+
+	if force {
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("error with client DO: ", err)
+		}
+
+		cmd.CheckForErrors(resp)
+
+		fmt.Println(resp.Status)
+		return
+	}
+
 	jsoPrettyPrint, err := json.MarshalIndent(conInfo, "", "    ")
 	if err != nil {
 		fmt.Println("Error", err)
@@ -128,19 +255,6 @@ func Create(conInfo cmd.ContainerInfo) {
 	if make == "NO" {
 		log.Fatal("Aborting")
 	} else {
-		jsonContainerInfo, err := json.Marshal(conInfo)
-		if err != nil {
-			fmt.Println("Error", err)
-		}
-		fmt.Println(string(jsonContainerInfo))
-		convert := []byte(jsonContainerInfo)
-		buf := bytes.NewBuffer(convert)
-
-		client := &http.Client{}
-		req, err := cmd.MakeNewRequest("POST", "/containers", buf)
-		if err != nil {
-			fmt.Println("Error making new request", err)
-		}
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -161,7 +275,13 @@ var createContainerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var ingest bool = false
-		conInfo := InteractiveContainerInfo(ingest, nil)
-		Create(conInfo)
+		if interactive {
+			conInfo := InteractiveContainerInfo(ingest, nil)
+			Create(conInfo)
+		} else {
+			conInfo := parseJson(args)
+			Create(conInfo)
+		}
+
 	},
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/containerInfo"
@@ -12,8 +13,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	multipleContainers []string
+	force              bool
+)
+
 func init() {
 	cmd.RootCmd.AddCommand(deleteContainerCmd)
+	deleteContainerCmd.Flags().StringSliceVarP(&multipleContainers, "multi", "m", []string{}, "All containers to be deleted 'col1,col2,col3'")
+	deleteContainerCmd.Flags().BoolVarP(&force, "force", "f", false, "Force delete (no prompt)")
 }
 
 type ContainerToBeDeleted string
@@ -23,9 +31,61 @@ func (c *ContainerToBeDeleted) wrapInDblQuotesAndBracket() {
 	*c = "[" + *c + "]"
 }
 
+func (c *ContainerToBeDeleted) wrapInDblQuotes() {
+	*c = "\"" + *c + "\""
+}
+
+func deleteRequest(payload []byte) {
+	client := &http.Client{}
+
+	buf := bytes.NewBuffer(payload)
+
+	req, err := cmd.MakeNewRequest("DELETE", "/containers", buf)
+	if err != nil {
+		fmt.Println("Error making new request", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("error with client DO: ", err)
+	}
+
+	cmd.CheckForErrors(resp)
+
+	fmt.Println(resp.StatusCode, "Successfully Deleted")
+}
+
+func deleteAllContainers() {
+	var cont strings.Builder
+	cont.WriteString("[")
+	for idx, val := range multipleContainers {
+		c := ContainerToBeDeleted(val)
+		c.wrapInDblQuotes()
+		if idx == 0 {
+			cont.WriteString(string(c))
+		}
+		cont.WriteString(", " + string(c))
+	}
+	cont.WriteString("]")
+	fmt.Println(cont.String())
+	payload := []byte(cont.String())
+
+	deleteRequest(payload)
+
+}
+
 func deleteContainer(containerName string) {
 
 	info := containerInfo.GetContainerInfo(containerName)
+
+	var containerToDelete = ContainerToBeDeleted(containerName)
+	containerToDelete.wrapInDblQuotesAndBracket()
+	payload := []byte(containerToDelete)
+
+	if force {
+		deleteRequest(payload)
+		return
+	}
 
 	make, err := prompt.New().Ask("Delete Container? \n" + string(info)).
 		Choose([]string{"NO", "YES"})
@@ -35,27 +95,8 @@ func deleteContainer(containerName string) {
 		log.Fatal("Aborting")
 	} else {
 
-		var containerToDelete = ContainerToBeDeleted(containerName)
-		containerToDelete.wrapInDblQuotesAndBracket()
+		deleteRequest(payload)
 
-		client := &http.Client{}
-
-		sliceOfBytes := []byte(containerToDelete)
-		buf := bytes.NewBuffer(sliceOfBytes)
-
-		req, err := cmd.MakeNewRequest("DELETE", "/containers", buf)
-		if err != nil {
-			fmt.Println("Error making new request", err)
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("error with client DO: ", err)
-		}
-
-		cmd.CheckForErrors(resp)
-
-		fmt.Println(resp.StatusCode, "Successfully Deleted")
 	}
 }
 
@@ -65,6 +106,14 @@ var deleteContainerCmd = &cobra.Command{
 	Long:    "A response of 200 is ideal, 401 is an auth error",
 	Example: "griddb-cloud-cli checkConnection",
 	Run: func(cmd *cobra.Command, args []string) {
-		deleteContainer(args[0])
+		if len(multipleContainers) > 0 {
+			deleteAllContainers()
+		} else {
+			if strings.Contains(args[0], ",") {
+				log.Fatalln("Did you forget the '-m'/'multi' flag?")
+			}
+			deleteContainer(args[0])
+		}
+
 	},
 }

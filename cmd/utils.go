@@ -78,6 +78,29 @@ type ErrorMsg struct {
 	ErrorMessage string `json:"errorMessage"`
 }
 
+var GridDBTypes = []string{
+	"BOOL",
+	"STRING",
+	"BYTE",
+	"SHORT",
+	"INTEGER",
+	"LONG",
+	"FLOAT",
+	"DOUBLE",
+	"TIMESTAMP",
+	"GEOMETRY",
+	"BLOB",
+	"BOOL_ARRAY",
+	"STRING_ARRAY",
+	"BYTE_ARRAY",
+	"SHORT_ARRAY",
+	"INTEGER_ARRAY",
+	"LONG_ARRAY",
+	"FLOAT_ARRAY",
+	"DOUBLE_ARRAY",
+	"TIMESTAMP_ARRAY",
+}
+
 func AddBasicAuth(req *http.Request) {
 	user := viper.GetString("cloud_username")
 	pass := viper.GetString("cloud_pass")
