@@ -25,14 +25,37 @@ type ColumnSet struct {
 }
 
 type ExportProperties struct {
-	Version           string      `json:"version"`
-	Database          string      `json:"database"`
+	Version           string      `json:"version,omitempty"`
+	Database          string      `json:"database,omitempty"`
 	Container         string      `json:"container"`
-	ContainerType     string      `json:"containerType"`
-	ContainerFileType string      `json:"containerFileType"`
+	ContainerType     string      `json:"containerType,omitempty"`
+	ContainerFileType string      `json:"containerFileType,omitempty"`
 	ContainerFile     []string    `json:"containerFile"`
 	ColumnSet         []ColumnSet `json:"columnSet"`
 	RowKeySet         []string    `json:"rowKeySet"`
+}
+
+var griddbTypes = []string{
+	"BOOL",
+	"STRING",
+	"BYTE",
+	"SHORT",
+	"INTEGER",
+	"LONG",
+	"FLOAT",
+	"DOUBLE",
+	"TIMESTAMP",
+	"GEOMETRY",
+	"BLOB",
+	"BOOL_ARRAY",
+	"STRING_ARRAY",
+	"BYTE_ARRAY",
+	"SHORT_ARRAY",
+	"INTEGER_ARRAY",
+	"LONG_ARRAY",
+	"FLOAT_ARRAY",
+	"DOUBLE_ARRAY",
+	"TIMESTAMP_ARRAY",
 }
 
 func init() {
@@ -59,7 +82,7 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 		} else {
 			// User inputs col type for every other scenario
 			colType, err = prompt.New().Ask("Column Type for col #" + strconv.Itoa(i+1)).
-				Choose([]string{"BOOL", "STRING", "INTEGER", "LONG", "FLOAT", "DOUBLE", "TIMESTAMP", "GEOMETRY"})
+				Choose(griddbTypes)
 			cmd.CheckErr(err)
 		}
 
@@ -85,20 +108,50 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 	return columnInfo
 }
 
-// type ContainerInfoColumns struct {
-// 	Name          string   `json:"name"`
-// 	Type          string   `json:"type"`
-// 	TimePrecision string   `json:"timePrecision,omitempty"`
-// 	Index         []string `json:"index"`
-// }
+func booleanToBool(s string) string {
+	if s == "boolean" {
+		return "BOOL"
+	} else {
+		return s
+	}
+}
+
+func typeSwitcher(s string) string {
+	switch s {
+	case "boolean":
+		return "BOOL"
+	case "boolean[]":
+		return "BOOL_ARRAY"
+	case "string[]":
+		return "STRING_ARRAY"
+	case "byte[]":
+		return "BYTE_ARRAY"
+	case "short[]":
+		return "SHORT_ARRAY"
+	case "integer[]":
+		return "INTEGER_ARRAY"
+	case "long[]":
+		return "LONG_ARRAY"
+	case "float[]":
+		return "FLOAT_ARRAY"
+	case "double[]":
+		return "DOUBLE_ARRAY"
+	case "timestamp[]":
+		return "TIMESTAMP_ARRAY"
+	default:
+		return strings.ToUpper(s)
+
+	}
+
+}
 
 func transformToConInfoCols(colSet []ColumnSet) []cmd.ContainerInfoColumns {
 	n := len(colSet)
 	var conInfoCols = make([]cmd.ContainerInfoColumns, n)
 
 	for idx, val := range colSet {
-		conInfoCols[idx].Name = strings.ToUpper(val.ColumnName)
-		conInfoCols[idx].Type = strings.ToUpper(val.Type)
+		conInfoCols[idx].Name = val.ColumnName
+		conInfoCols[idx].Type = typeSwitcher(val.Type)
 		//conInfoCols[idx].Index = []string{}
 	}
 	return conInfoCols
