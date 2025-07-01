@@ -14,13 +14,13 @@ cloud_pass: "pass"
 
 ## Examples
 
-$ ./griddb-cloud-cli checkConnection
+$ griddb-cloud-cli checkConnection
 
 ```bash
     200 OK
 ```
 
-$ ./griddb-cloud-cli list 
+$ griddb-cloud-cli list 
 
 ```bash
 0: actual_reading_1
@@ -33,7 +33,7 @@ $ ./griddb-cloud-cli list
 7: device6
 ```
 
-./griddb-cloud-cli show device2        
+griddb-cloud-cli show device2        
 
 ```bash
 {
@@ -91,7 +91,7 @@ $ ./griddb-cloud-cli list
 }
 ```
 
-$ ./griddb-cloud-cli read device2 --limit 1 --pretty
+$ griddb-cloud-cli read device2 --limit 1 --pretty
 
 ```bash
     [ { "name": "device2", "stmt": "select * limit 1", "columns": null, "hasPartialExecution": true }]
@@ -147,7 +147,7 @@ $ ./griddb-cloud-cli read device2 --limit 1 --pretty
 ]
 ```
 
-$ ./griddb-cloud-cli read device2 --limit 9 --rows
+$ griddb-cloud-cli read device2 --limit 9 --rows
 
 ```bash
 [ { "name": "device2", "stmt": "select * limit 9", "columns": null, "hasPartialExecution": true }]
@@ -166,7 +166,7 @@ ts,device,co,humidity,light,lpg,motion,smoke,temperature,
 
 
 
-$ ./griddb-cloud-cli read graph device2 -l 10
+$ griddb-cloud-cli read graph device2 -l 10
 
 ```bash
 [ { "name": "device2", "stmt": "select * limit 10", "columns": null, "hasPartialExecution": true }]
@@ -213,7 +213,7 @@ Column motion (of type BOOL ) is not a `number` type. Omitting
 
 \# Interactive mode with create and ingest
 
-$ ./griddb-cloud-cli create
+$ griddb-cloud-cli create
 
 ```bash
 ✔ Container Name: … sample1
@@ -245,8 +245,18 @@ $ ./griddb-cloud-cli create
 201 Created
 ```
 
+\# Create container with json
 
-$ ./griddb-cloud-cli put sample1
+```bash
+$ griddb-cloud-cli create sample.json -f 
+
+{  sample COLLECTION  [] [{ts timestamp true} {name string false} {temp float[] false} {counts long[] false} {names string[] false} {daties timestamp[] true}] [name]}
+{"container_name":"gorg","container_type":"COLLECTION","rowkey":true,"columns":[{"name":"ts","type":"TIMESTAMP","index":null},{"name":"name","type":"STRING","index":null},{"name":"temp","type":"FLOAT_ARRAY","index":null},{"name":"counts","type":"LONG_ARRAY","index":null},{"name":"names","type":"STRING_ARRAY","index":null},{"name":"daties","type":"TIMESTAMP_ARRAY","index":null}]}
+201 Created
+```
+
+
+$ griddb-cloud-cli put sample1
 
 ```bash
 Container Name: sample1
@@ -261,7 +271,7 @@ Container Name: sample1
 200 OK
 ```
 
-$ ./griddb-cloud-cli ingest iot_telemetry_data.csv
+$ griddb-cloud-cli ingest iot_telemetry_data.csv
 
 ```bash
 ✔ Does this container already exist? … NO
@@ -348,20 +358,20 @@ Inserting 1000 rows
 ## SQL Examples
 
 
-$ ./griddb-cloud-cli sql create -s "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);"
+$ griddb-cloud-cli sql create -s "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);"
 
 ```bash
 [{"stmt": "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);" }]
 ```
 
-$ ./griddb-cloud-cli sql update -s "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"
+$ griddb-cloud-cli sql update -s "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"
 
 ```bash
 [{"stmt": "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')" }]
 [{"updatedRows":1,"status":1,"message":null,"stmt":"INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"}]
 ```
 
-$ ./griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
+$ griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
 
 ```bash
 [{"stmt": "select * from pyIntPart2 limit 1" }]

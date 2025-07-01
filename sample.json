@@ -1,0 +1,39 @@
+{
+    "container": "sample01",
+    "containerType": "COLLECTION",
+    "columnSet": [
+        {
+            "columnName": "ts",
+            "type": "timestamp",
+            "notNull": true
+        },
+        {
+            "columnName": "name",
+            "type": "string",
+            "notNull": false
+        },
+        {
+            "columnName": "temp",
+            "type": "float[]",
+            "notNull": false
+        },
+        {
+            "columnName": "counts",
+            "type": "long[]",
+            "notNull": false
+        },
+        {
+            "columnName": "names",
+            "type": "string[]",
+            "notNull": false
+        },
+        {
+            "columnName": "dates",
+            "type": "timestamp[]",
+            "notNull": true
+        }
+    ],
+    "rowKeySet": [
+        "name"
+    ]
+}
