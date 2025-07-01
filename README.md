@@ -213,7 +213,7 @@ Column motion (of type BOOL ) is not a `number` type. Omitting
 
 \# Interactive mode with create and ingest
 
-$ griddb-cloud-cli create
+$ griddb-cloud-cli create --interactive
 
 ```bash
 ✔ Container Name: … sample1
