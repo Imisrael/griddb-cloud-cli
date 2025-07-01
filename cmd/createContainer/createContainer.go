@@ -16,7 +16,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var interactive bool
+var (
+	interactive bool
+	force       bool
+)
 
 type ColumnSet struct {
 	ColumnName string `json:"columnName"`
@@ -61,6 +64,7 @@ var griddbTypes = []string{
 func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
 	createContainerCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "When enabled, goes through interactive to make cols and types")
+	createContainerCmd.Flags().BoolVarP(&force, "force", "f", false, "Force create (no prompt)")
 }
 
 func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumns {
@@ -108,14 +112,6 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 	return columnInfo
 }
 
-func booleanToBool(s string) string {
-	if s == "boolean" {
-		return "BOOL"
-	} else {
-		return s
-	}
-}
-
 func typeSwitcher(s string) string {
 	switch s {
 	case "boolean":
@@ -158,6 +154,14 @@ func transformToConInfoCols(colSet []ColumnSet) []cmd.ContainerInfoColumns {
 }
 
 func parseJson(args []string) cmd.ContainerInfo {
+
+	if len(args) != 1 {
+		if len(args) == 0 {
+			log.Fatal("Please add a json file as an argument")
+		} else {
+			log.Fatal("Please only select one json file at a time")
+		}
+	}
 
 	filename := args[0]
 	properties, err := os.ReadFile(filename)
@@ -236,6 +240,32 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 func Create(conInfo cmd.ContainerInfo) {
 
+	jsonContainerInfo, err := json.Marshal(conInfo)
+	if err != nil {
+		fmt.Println("Error", err)
+	}
+	fmt.Println(string(jsonContainerInfo))
+	convert := []byte(jsonContainerInfo)
+	buf := bytes.NewBuffer(convert)
+
+	client := &http.Client{}
+	req, err := cmd.MakeNewRequest("POST", "/containers", buf)
+	if err != nil {
+		fmt.Println("Error making new request", err)
+	}
+
+	if force {
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("error with client DO: ", err)
+		}
+
+		cmd.CheckForErrors(resp)
+
+		fmt.Println(resp.Status)
+		return
+	}
+
 	jsoPrettyPrint, err := json.MarshalIndent(conInfo, "", "    ")
 	if err != nil {
 		fmt.Println("Error", err)
@@ -248,19 +278,6 @@ func Create(conInfo cmd.ContainerInfo) {
 	if make == "NO" {
 		log.Fatal("Aborting")
 	} else {
-		jsonContainerInfo, err := json.Marshal(conInfo)
-		if err != nil {
-			fmt.Println("Error", err)
-		}
-		fmt.Println(string(jsonContainerInfo))
-		convert := []byte(jsonContainerInfo)
-		buf := bytes.NewBuffer(convert)
-
-		client := &http.Client{}
-		req, err := cmd.MakeNewRequest("POST", "/containers", buf)
-		if err != nil {
-			fmt.Println("Error making new request", err)
-		}
 
 		resp, err := client.Do(req)
 		if err != nil {
