@@ -38,29 +38,6 @@ type ExportProperties struct {
 	RowKeySet         []string    `json:"rowKeySet"`
 }
 
-var griddbTypes = []string{
-	"BOOL",
-	"STRING",
-	"BYTE",
-	"SHORT",
-	"INTEGER",
-	"LONG",
-	"FLOAT",
-	"DOUBLE",
-	"TIMESTAMP",
-	"GEOMETRY",
-	"BLOB",
-	"BOOL_ARRAY",
-	"STRING_ARRAY",
-	"BYTE_ARRAY",
-	"SHORT_ARRAY",
-	"INTEGER_ARRAY",
-	"LONG_ARRAY",
-	"FLOAT_ARRAY",
-	"DOUBLE_ARRAY",
-	"TIMESTAMP_ARRAY",
-}
-
 func init() {
 	cmd.RootCmd.AddCommand(createContainerCmd)
 	createContainerCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "When enabled, goes through interactive to make cols and types")
@@ -86,7 +63,7 @@ func ColDeclaration(numberOfCols int, timeseries bool) []cmd.ContainerInfoColumn
 		} else {
 			// User inputs col type for every other scenario
 			colType, err = prompt.New().Ask("Column Type for col #" + strconv.Itoa(i+1)).
-				Choose(griddbTypes)
+				Choose(cmd.GridDBTypes)
 			cmd.CheckErr(err)
 		}
 

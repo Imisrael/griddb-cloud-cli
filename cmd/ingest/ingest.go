@@ -126,7 +126,7 @@ func ColsWithKnownNames(header []string, timeseries bool) []cmd.ContainerInfoCol
 		} else {
 			// User inputs col type for every other scenario
 			colType, err = prompt.New().Ask("(" + header[i] + ") Column Type").
-				Choose([]string{"BOOL", "STRING", "INTEGER", "LONG", "FLOAT", "DOUBLE", "TIMESTAMP", "GEOMETRY"})
+				Choose(cmd.GridDBTypes)
 			cmd.CheckErr(err)
 		}
 
