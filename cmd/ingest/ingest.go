@@ -319,10 +319,10 @@ func ingest(csvName string) {
 		var containerToMake cmd.ContainerInfo
 		if sameNames == "YES" {
 			containerToMake = containerInfoWithKnownNames(newHeader)
-			createContainer.Create(containerToMake)
+			createContainer.Create(containerToMake, false)
 		} else {
 			containerToMake = createContainer.InteractiveContainerInfo(true, header)
-			createContainer.Create(containerToMake)
+			createContainer.Create(containerToMake, false)
 		}
 		fmt.Println("Container Created. Starting Ingest")
 

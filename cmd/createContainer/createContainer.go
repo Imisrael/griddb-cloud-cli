@@ -175,7 +175,7 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 		cmd.CheckErr(err)
 		val, err := strconv.ParseBool(rk)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 		rowkey = val
 	} else {
@@ -193,7 +193,7 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 		numOfCols, err := strconv.Atoi(numberOfCols)
 		if err != nil {
-			fmt.Println("ERROR", err)
+			log.Fatal("ERROR", err)
 		}
 		colInfos = ColDeclaration(numOfCols, timeseries)
 	}
@@ -207,11 +207,11 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 }
 
-func Create(conInfo cmd.ContainerInfo) {
+func Create(conInfo cmd.ContainerInfo, migrateForce bool) {
 
 	jsonContainerInfo, err := json.Marshal(conInfo)
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Fatal("Error", err)
 	}
 	fmt.Println(string(jsonContainerInfo))
 	convert := []byte(jsonContainerInfo)
@@ -220,13 +220,13 @@ func Create(conInfo cmd.ContainerInfo) {
 	client := &http.Client{}
 	req, err := cmd.MakeNewRequest("POST", "/containers", buf)
 	if err != nil {
-		fmt.Println("Error making new request", err)
+		log.Fatal("Error making new request", err)
 	}
 
-	if force {
+	if force || migrateForce {
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("error with client DO: ", err)
+			log.Fatal("error with client DO: ", err)
 		}
 
 		cmd.CheckForErrors(resp)
@@ -237,7 +237,7 @@ func Create(conInfo cmd.ContainerInfo) {
 
 	jsoPrettyPrint, err := json.MarshalIndent(conInfo, "", "    ")
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Fatal("Error", err)
 	}
 
 	make, err := prompt.New().Ask("Make Container? \n" + string(jsoPrettyPrint)).
@@ -250,7 +250,7 @@ func Create(conInfo cmd.ContainerInfo) {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("error with client DO: ", err)
+			log.Fatal("error with client DO: ", err)
 		}
 
 		cmd.CheckForErrors(resp)
@@ -269,7 +269,7 @@ var createContainerCmd = &cobra.Command{
 		var ingest bool = false
 		if interactive {
 			conInfo := InteractiveContainerInfo(ingest, nil)
-			Create(conInfo)
+			Create(conInfo, false)
 		} else {
 			if len(args) != 1 {
 				if len(args) == 0 {
@@ -280,7 +280,7 @@ var createContainerCmd = &cobra.Command{
 			}
 
 			conInfo, _ := ParseJson(args[0])
-			Create(conInfo)
+			Create(conInfo, false)
 		}
 
 	},
