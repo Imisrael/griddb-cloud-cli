@@ -131,31 +131,35 @@ func migrate(dirName string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var propFile string
+	var propFiles []string
 	for _, entry := range c {
 		name := entry.Name()
 		if strings.Contains(name, ".json") && name != "gs_export.json" {
-			propFile = dirName + "/" + name
+			propFiles = append(propFiles, dirName+"/"+name)
 		}
 
 	}
 
-	conInfo, csvFiles := createContainer.ParseJson(propFile)
+	fmt.Println(propFiles)
 
-	createContainer.Create(conInfo, force)
-	containerName := conInfo.ContainerName
-	types := mapping(conInfo.Columns)
+	for _, propFile := range propFiles {
+		conInfo, csvFiles := createContainer.ParseJson(propFile)
 
-	//var mapRows = make(map[string][][]string)
+		createContainer.Create(conInfo, force)
+		containerName := conInfo.ContainerName
+		types := mapping(conInfo.Columns)
 
-	for _, file := range csvFiles {
-		fileName := dirName + "/" + file
-		allRows, err := readAllRows(fileName)
-		if err != nil {
-			log.Fatal(err)
+		//var mapRows = make(map[string][][]string)
+
+		for _, file := range csvFiles {
+			fileName := dirName + "/" + file
+			allRows, err := readAllRows(fileName)
+			if err != nil {
+				log.Fatal(err)
+			}
+			// mapRows[file] = allRows
+			processCSV(allRows, types, containerName, fileName)
 		}
-		// mapRows[file] = allRows
-		processCSV(allRows, types, containerName, fileName)
 	}
 
 }

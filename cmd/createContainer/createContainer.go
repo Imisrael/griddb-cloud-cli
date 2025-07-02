@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -27,15 +28,46 @@ type ColumnSet struct {
 	NotNull    bool   `json:"notNull"`
 }
 
+type ContainerFile []string
+
 type ExportProperties struct {
-	Version           string      `json:"version,omitempty"`
-	Database          string      `json:"database,omitempty"`
-	Container         string      `json:"container"`
-	ContainerType     string      `json:"containerType,omitempty"`
-	ContainerFileType string      `json:"containerFileType,omitempty"`
-	ContainerFile     []string    `json:"containerFile"`
-	ColumnSet         []ColumnSet `json:"columnSet"`
-	RowKeySet         []string    `json:"rowKeySet"`
+	Version           string        `json:"version,omitempty"`
+	Database          string        `json:"database,omitempty"`
+	Container         string        `json:"container"`
+	ContainerType     string        `json:"containerType,omitempty"`
+	ContainerFileType string        `json:"containerFileType,omitempty"`
+	ContainerFile     ContainerFile `json:"containerFile"`
+	ColumnSet         []ColumnSet   `json:"columnSet"`
+	RowKeySet         []string      `json:"rowKeySet"`
+}
+
+// custom JSON unmarshaler for the case where sometimes the value is a slice
+// and sometimes it's just a singular string
+func (c *ContainerFile) UnmarshalJSON(data []byte) error {
+	var nums any
+	err := json.Unmarshal(data, &nums)
+	if err != nil {
+		return err
+	}
+
+	items := reflect.ValueOf(nums)
+	switch items.Kind() {
+	case reflect.String:
+		*c = append(*c, items.String())
+
+	case reflect.Slice:
+		*c = make(ContainerFile, 0, items.Len())
+		for i := 0; i < items.Len(); i++ {
+			item := items.Index(i)
+			switch item.Kind() {
+			case reflect.String:
+				*c = append(*c, item.String())
+			case reflect.Interface:
+				*c = append(*c, item.Interface().(string))
+			}
+		}
+	}
+	return nil
 }
 
 func init() {
