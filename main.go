@@ -8,6 +8,7 @@ import (
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/deleteContainer"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/ingest"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/listContainers"
+	_ "github.com/Imisrael/griddb-cloud-cli/cmd/migrate"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/putRow"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/readContainer"
 	_ "github.com/Imisrael/griddb-cloud-cli/cmd/sql"

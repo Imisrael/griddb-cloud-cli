@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -27,15 +28,46 @@ type ColumnSet struct {
 	NotNull    bool   `json:"notNull"`
 }
 
+type ContainerFile []string
+
 type ExportProperties struct {
-	Version           string      `json:"version,omitempty"`
-	Database          string      `json:"database,omitempty"`
-	Container         string      `json:"container"`
-	ContainerType     string      `json:"containerType,omitempty"`
-	ContainerFileType string      `json:"containerFileType,omitempty"`
-	ContainerFile     []string    `json:"containerFile"`
-	ColumnSet         []ColumnSet `json:"columnSet"`
-	RowKeySet         []string    `json:"rowKeySet"`
+	Version           string        `json:"version,omitempty"`
+	Database          string        `json:"database,omitempty"`
+	Container         string        `json:"container"`
+	ContainerType     string        `json:"containerType,omitempty"`
+	ContainerFileType string        `json:"containerFileType,omitempty"`
+	ContainerFile     ContainerFile `json:"containerFile"`
+	ColumnSet         []ColumnSet   `json:"columnSet"`
+	RowKeySet         []string      `json:"rowKeySet"`
+}
+
+// custom JSON unmarshaler for the case where sometimes the value is a slice
+// and sometimes it's just a singular string
+func (c *ContainerFile) UnmarshalJSON(data []byte) error {
+	var nums any
+	err := json.Unmarshal(data, &nums)
+	if err != nil {
+		return err
+	}
+
+	items := reflect.ValueOf(nums)
+	switch items.Kind() {
+	case reflect.String:
+		*c = append(*c, items.String())
+
+	case reflect.Slice:
+		*c = make(ContainerFile, 0, items.Len())
+		for i := 0; i < items.Len(); i++ {
+			item := items.Index(i)
+			switch item.Kind() {
+			case reflect.String:
+				*c = append(*c, item.String())
+			case reflect.Interface:
+				*c = append(*c, item.Interface().(string))
+			}
+		}
+	}
+	return nil
 }
 
 func init() {
@@ -130,17 +162,9 @@ func transformToConInfoCols(colSet []ColumnSet) []cmd.ContainerInfoColumns {
 	return conInfoCols
 }
 
-func parseJson(args []string) cmd.ContainerInfo {
+func ParseJson(jsonName string) (cmd.ContainerInfo, []string) {
 
-	if len(args) != 1 {
-		if len(args) == 0 {
-			log.Fatal("Please add a json file as an argument")
-		} else {
-			log.Fatal("Please only select one json file at a time")
-		}
-	}
-
-	filename := args[0]
+	filename := jsonName
 	properties, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -150,7 +174,7 @@ func parseJson(args []string) cmd.ContainerInfo {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(exportProperties)
+	//fmt.Println(exportProperties)
 
 	var conInfo cmd.ContainerInfo
 
@@ -161,7 +185,7 @@ func parseJson(args []string) cmd.ContainerInfo {
 	cols := transformToConInfoCols(exportProperties.ColumnSet)
 	conInfo.Columns = cols
 
-	return conInfo
+	return conInfo, exportProperties.ContainerFile
 }
 
 func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
@@ -183,7 +207,7 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 		cmd.CheckErr(err)
 		val, err := strconv.ParseBool(rk)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
 		rowkey = val
 	} else {
@@ -201,7 +225,7 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 		numOfCols, err := strconv.Atoi(numberOfCols)
 		if err != nil {
-			fmt.Println("ERROR", err)
+			log.Fatal("ERROR", err)
 		}
 		colInfos = ColDeclaration(numOfCols, timeseries)
 	}
@@ -215,11 +239,11 @@ func InteractiveContainerInfo(ingest bool, header []string) cmd.ContainerInfo {
 
 }
 
-func Create(conInfo cmd.ContainerInfo) {
+func Create(conInfo cmd.ContainerInfo, migrateForce bool) {
 
 	jsonContainerInfo, err := json.Marshal(conInfo)
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Fatal("Error", err)
 	}
 	fmt.Println(string(jsonContainerInfo))
 	convert := []byte(jsonContainerInfo)
@@ -228,13 +252,13 @@ func Create(conInfo cmd.ContainerInfo) {
 	client := &http.Client{}
 	req, err := cmd.MakeNewRequest("POST", "/containers", buf)
 	if err != nil {
-		fmt.Println("Error making new request", err)
+		log.Fatal("Error making new request", err)
 	}
 
-	if force {
+	if force || migrateForce {
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("error with client DO: ", err)
+			log.Fatal("error with client DO: ", err)
 		}
 
 		cmd.CheckForErrors(resp)
@@ -245,7 +269,7 @@ func Create(conInfo cmd.ContainerInfo) {
 
 	jsoPrettyPrint, err := json.MarshalIndent(conInfo, "", "    ")
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Fatal("Error", err)
 	}
 
 	make, err := prompt.New().Ask("Make Container? \n" + string(jsoPrettyPrint)).
@@ -258,7 +282,7 @@ func Create(conInfo cmd.ContainerInfo) {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("error with client DO: ", err)
+			log.Fatal("error with client DO: ", err)
 		}
 
 		cmd.CheckForErrors(resp)
@@ -277,10 +301,18 @@ var createContainerCmd = &cobra.Command{
 		var ingest bool = false
 		if interactive {
 			conInfo := InteractiveContainerInfo(ingest, nil)
-			Create(conInfo)
+			Create(conInfo, false)
 		} else {
-			conInfo := parseJson(args)
-			Create(conInfo)
+			if len(args) != 1 {
+				if len(args) == 0 {
+					log.Fatal("Please add a json file as an argument")
+				} else {
+					log.Fatal("Please only select one json file at a time")
+				}
+			}
+
+			conInfo, _ := ParseJson(args[0])
+			Create(conInfo, false)
 		}
 
 	},

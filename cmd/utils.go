@@ -176,16 +176,17 @@ func CheckForErrors(resp *http.Response) {
 		if err := json.Unmarshal(body, &errorMsg); err != nil {
 			panic(err)
 		}
-		if resp.StatusCode == 400 {
+		switch resp.StatusCode {
+		case 400:
 			log.Fatal("400 Error: " + errorMsg.ErrorMessage)
-		} else if resp.StatusCode == 401 {
+		case 401:
 			fmt.Println(errorMsg.ErrorMessage)
 			log.Fatal("Authentication Error. Please check your username and password in your config file ")
-		} else if resp.StatusCode == 404 {
+		case 404:
 			log.Fatal("404 (not found) - Does this container exist?")
-		} else if resp.StatusCode == 500 {
+		case 500:
 			log.Fatal("500 error! " + errorMsg.ErrorMessage)
-		} else {
+		default:
 			log.Fatal("Unknown Error. Please try again.  " + errorMsg.ErrorMessage)
 		}
 	}
