@@ -8,20 +8,20 @@ The CLI Tool is distributed via [github as a single binary file](https://github.
 
 The tool is written in Go, so you could also clone the repo and build your own binary:
 
-```bash
-$ go get
-$ go build
-```
+<div class="clipboard">
+<pre><code class="language-sh">$ go get
+$ go build</code></pre>
+</div>
 
 ### Configuration
 
 This tool expects a `.yaml` file to exist in `$HOME/.griddb.yaml` with the following fields: 
 
-```bash
-cloud_url: "url"
+<div class="clipboard">
+<pre><code class="language-sh">cloud_url: "url"
 cloud_username: "example"
-cloud_pass: "pass"
-```
+cloud_pass: "pass"</code></pre>
+</div>
 
 Alternatively, you save the file elsewhere and include the `--config` flag when running your tool (ie. `griddb-cloud-cli --config /opt/configs/griddb.yaml checkConnection`).
 
@@ -32,8 +32,8 @@ You will also still need to whitelist your IP Address in the GridDB Cloud Portal
 
 This tool was written with the help of the ever-popular [Cobra](https://github.com/spf13/cobra) Library. Because of this, we are able to use the `--help` flag for all the commands in case you forget the functionality of some of the commands and their flags. 
 
-```bash
-$ griddb-cloud-cli help
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli help
 
 A series of commands to help you manage your cloud-based DB.
 Standouts include creating a container and graphing one using 'read graph' and 'create' respectfully
@@ -56,8 +56,8 @@ Available Commands:
 
 Flags:
       --config string   config file (default is $HOME/.griddb.yaml)
-  -h, --help            help for griddb-cloud-cli
-```
+  -h, --help            help for griddb-cloud-cli</code></pre>
+</div>
 
 So with that out of the way, let's begin with the commands.
 
@@ -67,37 +67,37 @@ On your first time around, you should run the `checkConnection` command as a san
 
 #### Check Connection
 
-```bash
-$ griddb-cloud-cli checkConnection
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli checkConnection
 
 [10005:TXN_AUTH_FAILED] (address=172.25.23.68:10001, partitionId=0)
-2025/04/30 08:32:33 Authentication Error. Please check your username and password in your config file 
-```
+2025/04/30 08:32:33 Authentication Error. Please check your username and password in your config file </code></pre>
+</div>
 
-```bash
-$ griddb-cloud-cli checkConnection
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli checkConnection
 
-2025/04/30 08:33:48 (403) IP Connection Error. Is this IP Address Whitelisted? Please consider whitelisting Ip Address: X.X.X.116
-```
+2025/04/30 08:33:48 (403) IP Connection Error. Is this IP Address Whitelisted? Please consider whitelisting Ip Address: X.X.X.116</code></pre>
+</div>
 
-```bash
-$ griddb-cloud-cli checkConnection
-2025/04/30 08:35:20 Please set a config file with the --config flag or set one in the default location $HOME/.griddb.yaml
-```
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli checkConnection
+2025/04/30 08:35:20 Please set a config file with the --config flag or set one in the default location $HOME/.griddb.yaml</code></pre>
+</div>
 
 And if everything is settled correctly:
 
-```bash
-$ griddb-cloud-cli checkConnection
-200 OK
-```
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli checkConnection
+200 OK</code></pre>
+</div>
 
 #### List Containers
 
 You can list all containers inside of your Cloud DB Instance:
 
-```bash
-$ griddb-cloud-cli list
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli list
 
 0: actual_reading_1
 1: actual_reading_10
@@ -106,16 +106,16 @@ $ griddb-cloud-cli list
 4: device2
 5: device3
 6: device4
-7: device6
-```
+7: device6</code></pre>
+</div>
 
 #### Show Container
 
 You can display the schema and other info about an individual container:
 
 
-```bash
-$ griddb-cloud-cli show device2  
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli show device2  
 
 {
     "container_name": "device2",
@@ -169,15 +169,15 @@ $ griddb-cloud-cli show device2
             "index": []
         }
     ]
-}
-```
+}</code></pre>
+</div>
 
 #### Querying/Reading a Container
 
 You can run TQL or SQL queries on your containers. TQL is the simpler option: 
 
-```bash
-$ griddb-cloud-cli read device2 --limit 1 --pretty
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli read device2 --limit 1 --pretty
 
     [ { "name": "device2", "stmt": "select * limit 1", "columns": null, "hasPartialExecution": true }]
 [
@@ -228,15 +228,15 @@ $ griddb-cloud-cli read device2 --limit 1 --pretty
       "Value": 22.7
     }
   ]
-]
-```
+]</code></pre>
+</div>
 
-The `read` command will run a simple TQL query of your container which you can then specify the folliwng: an offset (--offset), a limit (-l, --limit), pretty print(-p, --pretty), just rows (--rows), which columns you want to see (--columns) or just the straight obj delivered from GridDB Cloud (--raw). 
+The `read` command will run a simple TQL query of your container which you can then specify the following: an offset (--offset), a limit (-l, --limit), pretty print(-p, --pretty), just rows (--rows), which columns you want to see (--columns) or just the straight obj delivered from GridDB Cloud (--raw). 
 
 Normally when you query a container with GridDB Cloud, it will send your results as two arrays, one with your column object, and another with more arrays of just row data. You can query this with --raw, but the default is to make a JSON and send that unstructured. If you use Pretty like above, it will indent and space it out for you. Just printing rows is better if you querying lots of rows: 
 
-```bash
-$ griddb-cloud-cli read device1 --limit 25 --rows
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli read device1 --limit 25 --rows
 
 [ { "name": "device1", "stmt": "select * limit 25", "columns": null, "hasPartialExecution": true }]
 
@@ -265,15 +265,15 @@ ts,co,humidity,light,lpg,motion,smoke,temp,
 [2020-07-12T01:03:08.403Z 0.0048101357 53.7 false 0.0074873232 false 0.0199456799 21.8]
 [2020-07-12T01:03:08.942Z 0.0049860142 51.1 false 0.0076843815 false 0.02050692 22.4]
 [2020-07-12T01:03:10.023Z 0.0048141805 53.5 false 0.0074918772 false 0.0199586389 21.7]
-[2020-07-12T01:03:12.863Z 0.0050019251 51.1 false 0.0077021129 false 0.020557469 22.3]
-```
+[2020-07-12T01:03:12.863Z 0.0050019251 51.1 false 0.0077021129 false 0.020557469 22.3]</code></pre>
+</div>
 
 #### Querying Number Data into an ASCII Line Chart
 
 Using a subcommand of `read`, you can also run a TQL query and read the results into a graph. For example: 
 
-```bash
-$ griddb-cloud-cli read graph device1 -l 10 --columns temp,humidity
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli read graph device1 -l 10 --columns temp,humidity
 
 [ { "name": "device1", "stmt": "select * limit 10", "columns": ["temp","humidity"], "hasPartialExecution": true }]
  77.60 ┼╮
@@ -309,13 +309,13 @@ $ griddb-cloud-cli read graph device1 -l 10 --columns temp,humidity
  19.50 ┤                 ╰───────╯                                     ╰─────╯              ╰──────────────
                                           Col names from container device1
 
-                                                ■ temp   ■ humidity
-```
+                                                ■ temp   ■ humidity</code></pre>
+</div>
 
 The results are color-coded so that you can accuately see which cols are mapped to which values. It also automatically omits non-number types if you just want to read the entire container a line chart: 
 
-```bash
-$ griddb-cloud-cli read graph device1 -l 5
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli read graph device1 -l 5
 
 Column ts (of type TIMESTAMP ) is not a `number` type. Omitting
 Column light (of type BOOL ) is not a `number` type. Omitting
@@ -353,8 +353,8 @@ Column motion (of type BOOL ) is not a `number` type. Omitting
   0.00 ┼───────────────────────────────────────────────────────────────────────────────────────────────────
                                           Col names from container device1
 
-                                    ■ co   ■ humidity   ■ lpg   ■ smoke   ■ temp
-```
+                                    ■ co   ■ humidity   ■ lpg   ■ smoke   ■ temp</code></pre>
+</div>
 
 #### Creating Containers
 
@@ -362,8 +362,8 @@ You can create containers using an interactive question prompt in the CLI. It wi
 
 For example, let's create a new time series container with two columns: 
 
-```bash
-$ griddb-cloud-cli create
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli create
 
 
 ✔ Container Name: … sample1
@@ -392,8 +392,8 @@ $ griddb-cloud-cli create
     ]
 } … YES
 {"container_name":"sample1","container_type":"TIME_SERIES","rowkey":true,"columns":[{"name":"ts","type":"TIMESTAMP","index":null},{"name":"temp","type":"DOUBLE","index":null}]}
-201 Created
-```
+201 Created</code></pre>
+</div>
 
 If you can't easily follow along with the prompt here, please just download the tool and try it for yourself!
 
@@ -403,7 +403,8 @@ And note, as explained in the prompts, if you select to create a TIME_SERIES Con
 
 Similarly, you can follow along with the prompt to push data into your container, 1 by 1. Here we will push to our new container `sample1` and use `NOW()` as our current timestamp: 
 
-```bash 
+<div class="clipboard">
+<pre><code class="language-sh"> 
 $ griddb-cloud-cli put sample1
 
 Container Name: sample1
@@ -415,14 +416,15 @@ Container Name: sample1
  Column Type: DOUBLE … 20.2
 [["2025-04-30T07:43:03.700Z",  20.2]]
 ✔ Add the Following to container sample1? … YES
-200 OK
-```
+200 OK</code></pre>
+</div>
 
 #### Ingesting CSV Data
 
 You can also ingest full CSV files with this tool. It too uses an interactive prompt as there is information that needs to be set for each col, such as index position in csv and data type. Once you set those, it will ingest the data in chunks of 1000.
 
-```bash 
+<div class="clipboard">
+<pre><code class="language-sh"> 
 
 $ griddb-cloud-cli ingest iot_telemetry_data.csv
 
@@ -504,8 +506,8 @@ Inserting 1000 rows
 200 OK
 Inserting 1000 rows
 200 OK
-Inserting 1000 rows
-```
+Inserting 1000 rows</code></pre>
+</div>
 
 Notice here, in this example, it asks if the container exists in your DB yet. If you select NO, it will create the container for you as shown above. But if you select YES, it will allow you to pick the container from your list and then map the proper indices, and then ingest that way -- handy!
 
@@ -519,29 +521,30 @@ First, let's create a new partitioned table:
 
 `griddb-cloud-cli sql query -s `
 
-```bash
-$ griddb-cloud-cli sql create -s "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);"
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli sql create -s "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);"
 
-[{"stmt": "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);" }]
-```
+[{"stmt": "CREATE TABLE IF NOT EXISTS pyIntPart1 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);" }]</code></pre>
+</div>
 
 Now we have our table. Now let's push some data into it: 
 
 `griddb-cloud-cli sql update -s `
 
-```bash 
+<div class="clipboard">
+<pre><code class="language-sh"> 
 $ griddb-cloud-cli sql update -s "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"
 
 [{"stmt": "INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')" }]
-[{"updatedRows":1,"status":1,"message":null,"stmt":"INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"}]
-```
+[{"updatedRows":1,"status":1,"message":null,"stmt":"INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')"}]</code></pre>
+</div>
 
 And then read from it: 
 
 `griddb-cloud-cli sql query -s`
 
-```bash
-$ griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
 
 [{"stmt": "select * from pyIntPart2 limit 1" }]
 
@@ -558,17 +561,19 @@ $ griddb-cloud-cli sql query -s "select * from pyIntPart2 limit 1" --pretty
             "Value": "fourth"
         }
     ]
-]
-```
+]</code></pre>
+</div>
 
 And as explained above, the `read` command uses TQL under the hood, which does not have access to  partitioned tables, so your use of read will fail on this particular table: 
 
-```bash
-$ griddb-cloud-cli read pyIntPart2
+<div class="clipboard">
+<pre><code class="language-sh">$ griddb-cloud-cli read pyIntPart2
 
-2025/04/30 09:09:41 400 Error: [151001:TQ_SYNTAX_ERROR_EXECUTION] Partial/Distribute TQL does not support order by and selection expression except for '*' (address=172.25.23.69:10001, partitionId=27) (containerName=pyIntPart2)
-```
+2025/04/30 09:09:41 400 Error: [151001:TQ_SYNTAX_ERROR_EXECUTION] Partial/Distribute TQL does not support order by and selection expression except for '*' (address=172.25.23.69:10001, partitionId=27) (containerName=pyIntPart2)</code></pre>
+</div>
 
 ## Conclusion
 
 We hope that the GridDB Cloud CLI tool will be helpful and we hope this article showcased its strengths adequately! 
+
+And of course, because this tool is completely open source, we encourage users to tinker and expand the current suite of available features. Some of the stuff that may be coming from us: JSON-based table creation, pushing rows without interactive mode, many more!
