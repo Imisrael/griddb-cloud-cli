@@ -149,15 +149,12 @@ func migrate(dirName string) {
 		containerName := conInfo.ContainerName
 		types := mapping(conInfo.Columns)
 
-		//var mapRows = make(map[string][][]string)
-
 		for _, file := range csvFiles {
 			fileName := dirName + "/" + file
 			allRows, err := readAllRows(fileName)
 			if err != nil {
 				log.Fatal(err)
 			}
-			// mapRows[file] = allRows
 			processCSV(allRows, types, containerName, fileName)
 		}
 	}
