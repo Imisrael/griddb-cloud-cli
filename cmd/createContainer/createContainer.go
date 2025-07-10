@@ -293,9 +293,10 @@ func Create(conInfo cmd.ContainerInfo, migrateForce bool) {
 }
 
 var createContainerCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Interactive walkthrough to create a container",
-	Long:  "A series of CLI prompts to create your griddb container",
+	Use:     "create",
+	Short:   "Create A container TIME_SERIES or COLLECTION container",
+	Long:    "A series of CLI prompts to create your griddb container in interactive mode, or a JSON file fed as an argument without the `i` flag set.",
+	Example: "griddb-cloud-cli create table1.json",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var ingest bool = false
