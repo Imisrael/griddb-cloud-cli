@@ -294,8 +294,31 @@ func Create(conInfo cmd.ContainerInfo, migrateForce bool) {
 
 var createContainerCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Interactive walkthrough to create a container",
-	Long:  "A series of CLI prompts to create your griddb container",
+	Short: "Create A container TIME_SERIES or COLLECTION container",
+	Long: `Create a container through a series of prompts in interactive mode, or through a json file in your filesystem. Here's an example of a json file: 
+{
+    "database": "public",
+    "container": "device1",
+    "containerType": "TIME_SERIES",
+    "columnSet": [
+        {
+            "columnName": "ts",
+            "type": "timestamp",
+            "notNull": true
+        },
+        {
+            "columnName": "temperature",
+            "type": "float",
+            "notNull": false
+        },
+        {
+            "columnName": "data",
+            "type": "double[]",
+            "notNull": false
+        }
+    ]
+}`,
+	Example: "griddb-cloud-cli create table1.json or griddb-cloud-cli create -i",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var ingest bool = false

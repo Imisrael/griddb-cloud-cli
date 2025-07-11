@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
@@ -16,8 +17,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	interactive   bool
+	containerName string
+	values        []string
+)
+
 func init() {
 	cmd.RootCmd.AddCommand(putRowCmd)
+	putRowCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "When enabled, goes through interactive to make cols and types")
+	putRowCmd.Flags().StringVarP(&containerName, "container Name", "n", "", "Container name")
+	putRowCmd.Flags().StringSliceVarP(&values, "values", "v", []string{}, "Add your values, one by one, separated by comma")
 }
 
 func placeHolderVal(colType string) string {
@@ -112,7 +122,7 @@ func BuildPutRowContents(containerName string) string {
 	return stringOfValues
 }
 
-func put(containerName string) {
+func putInteractive() {
 
 	conInfo := BuildPutRowContents(containerName)
 
@@ -147,11 +157,74 @@ func put(containerName string) {
 
 }
 
+func putRaw() {
+	if containerName == "" {
+		log.Fatal("Please make sure you set a container name with the -n flag")
+	}
+	if len(values) < 1 {
+		log.Fatal("Please make sure you set the values with the -v flag")
+	}
+
+	info := containerInfo.GetContainerInfo(containerName)
+
+	var containerInfo cmd.ContainerInfo
+	var cols []cmd.ContainerInfoColumns
+	if err := json.Unmarshal(info, &containerInfo); err != nil {
+		panic(err)
+	}
+	cols = containerInfo.Columns
+
+	var valuesToPush strings.Builder
+	valuesToPush.WriteString("[[")
+
+	for i, cont := range cols {
+		if i == 0 {
+			valuesToPush.WriteString(ConvertType(cont.Type, values[i]))
+		} else {
+			valuesToPush.WriteString(", " + ConvertType(cont.Type, values[i]))
+		}
+	}
+
+	valuesToPush.WriteString("]]")
+	log.Println(valuesToPush.String())
+	convert := []byte(valuesToPush.String())
+	buf := bytes.NewBuffer(convert)
+
+	client := &http.Client{}
+	req, err := cmd.MakeNewRequest("PUT", "/containers/"+containerName+"/rows", buf)
+	if err != nil {
+		fmt.Println("Error making new request", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("error with client DO: ", err)
+	}
+
+	cmd.CheckForErrors(resp)
+
+	fmt.Println(resp.Status)
+
+}
+
 var putRowCmd = &cobra.Command{
 	Use:   "put",
 	Short: "Interactive walkthrough to push a row",
 	Long:  "A series of CLI prompts to create your griddb container",
 	Run: func(cmd *cobra.Command, args []string) {
-		put(args[0])
+		if interactive {
+			if containerName == "" {
+				putInteractive()
+			} else {
+				log.Fatal("Please make sure you set a container name with the -n flag")
+			}
+		} else {
+			if len(args) > 1 {
+				log.Fatal("This command doesn't take arguments, you need to use the flags. -n for table name, -v for values in a comma separated list")
+			} else {
+				putRaw()
+			}
+		}
+
 	},
 }
