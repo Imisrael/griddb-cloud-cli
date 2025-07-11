@@ -176,7 +176,6 @@ func putRaw() {
 
 	var valuesToPush strings.Builder
 	valuesToPush.WriteString("[[")
-	fmt.Println(len(values), len(cols))
 
 	for i, cont := range cols {
 		if i == 0 {
