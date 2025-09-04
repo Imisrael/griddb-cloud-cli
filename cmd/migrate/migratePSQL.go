@@ -21,6 +21,11 @@ type PsqlSchema struct {
 	DataType   string `json:"data_type"`
 }
 
+type PsqlObj struct {
+	PrimaryKey  []string     `json:"primary_key"`
+	PsqlColumns []PsqlSchema `json:"columns"`
+}
+
 func typeSwitcher(s string) string {
 	switch s {
 	case "bool":
@@ -41,7 +46,6 @@ func typeSwitcher(s string) string {
 		return strings.ToUpper(s)
 
 	}
-
 }
 
 func transformToConInfoCols(colSet []PsqlSchema) []cmd.ContainerInfoColumns {
@@ -55,12 +59,37 @@ func transformToConInfoCols(colSet []PsqlSchema) []cmd.ContainerInfoColumns {
 	return conInfoCols
 }
 
+func checkIfTimeSeriesContainer(primaryKey []string, schema []PsqlSchema) bool {
+
+	n := len(primaryKey)
+
+	if n < 1 || n > 2 {
+		return false
+	} else if n == 1 {
+		for _, val := range schema {
+			fmt.Println(val.ColumnName)
+			if primaryKey[0] == val.ColumnName {
+				dt := val.DataType
+				dt = typeSwitcher(dt)
+				if dt == "TIMESTAMP" {
+					fmt.Println(dt)
+					fmt.Println(val)
+					return true
+				} else {
+					return false
+				}
+			}
+		}
+	}
+	return false
+}
+
 func parseJson(jsonName string) map[string]cmd.ContainerInfo {
 	schema, err := os.ReadFile(jsonName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var psqlSchema map[string][]PsqlSchema
+	var psqlSchema map[string]PsqlObj
 
 	err = json.Unmarshal(schema, &psqlSchema)
 	if err != nil {
@@ -72,9 +101,15 @@ func parseJson(jsonName string) map[string]cmd.ContainerInfo {
 	for tableName, schema := range psqlSchema {
 		var info cmd.ContainerInfo
 		info.ContainerName = tableName
-		info.ContainerType = "COLLECTION"
-		info.RowKey = true
-		cols := transformToConInfoCols(schema)
+		if checkIfTimeSeriesContainer(schema.PrimaryKey, schema.PsqlColumns) {
+			info.RowKey = true
+			info.ContainerType = "TIME_SERIES"
+		} else {
+			info.RowKey = false
+			info.ContainerType = "COLLECTION"
+		}
+
+		cols := transformToConInfoCols(schema.PsqlColumns)
 		info.Columns = cols
 		conInfo[tableName] = info
 	}
