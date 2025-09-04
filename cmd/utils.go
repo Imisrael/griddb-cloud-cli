@@ -125,6 +125,7 @@ func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request,
 	return req, nil
 }
 
+// This check error is for the User prompt stuff
 func CheckErr(err error) {
 	if err != nil {
 		if errors.Is(err, prompt.ErrUserQuit) {

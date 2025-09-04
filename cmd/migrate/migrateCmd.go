@@ -8,16 +8,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/Imisrael/griddb-cloud-cli/cmd"
-	"github.com/Imisrael/griddb-cloud-cli/cmd/createContainer"
 	"github.com/Imisrael/griddb-cloud-cli/cmd/putRow"
 	"github.com/spf13/cobra"
-)
-
-var (
-	force bool
 )
 
 func init() {
@@ -60,9 +54,6 @@ func readAllRows(csvFileName string) ([][]string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Chop off first four rows, they are meta data for import tool
-	allRows = allRows[4:]
 	return allRows, nil
 }
 
@@ -73,6 +64,28 @@ func mapping(cols []cmd.ContainerInfoColumns) []string {
 		types = append(types, col.Type)
 	}
 	return types
+}
+
+func putMultiRows(arrayString, containerName string) {
+
+	url := "/containers/" + containerName + "/rows"
+	convert := []byte(arrayString)
+	buf := bytes.NewBuffer(convert)
+
+	client := &http.Client{}
+	req, err := cmd.MakeNewRequest("PUT", url, buf)
+	if err != nil {
+		log.Fatal("Error making new request", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("error with client DO: ", err)
+	}
+
+	cmd.CheckForErrors(resp)
+
+	fmt.Println(resp.Status)
 }
 
 func processCSV(allRows [][]string, typeMapping []string, containerName, fileName string) {
@@ -103,70 +116,9 @@ func processCSV(allRows [][]string, typeMapping []string, containerName, fileNam
 
 }
 
-func putMultiRows(arrayString, containerName string) {
-
-	url := "/containers/" + containerName + "/rows"
-	convert := []byte(arrayString)
-	buf := bytes.NewBuffer(convert)
-
-	client := &http.Client{}
-	req, err := cmd.MakeNewRequest("PUT", url, buf)
-	if err != nil {
-		log.Fatal("Error making new request", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal("error with client DO: ", err)
-	}
-
-	cmd.CheckForErrors(resp)
-
-	fmt.Println(resp.Status)
-}
-
-func migrate(dirName string) {
-
-	c, err := os.ReadDir(dirName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var propFiles []string
-	for _, entry := range c {
-		name := entry.Name()
-		if strings.Contains(name, ".json") && name != "gs_export.json" {
-			propFiles = append(propFiles, dirName+"/"+name)
-		}
-
-	}
-
-	fmt.Println(propFiles)
-
-	for _, propFile := range propFiles {
-		conInfo, csvFiles := createContainer.ParseJson(propFile)
-
-		createContainer.Create(conInfo, force)
-		containerName := conInfo.ContainerName
-		types := mapping(conInfo.Columns)
-
-		for _, file := range csvFiles {
-			fileName := dirName + "/" + file
-			allRows, err := readAllRows(fileName)
-			if err != nil {
-				log.Fatal(err)
-			}
-			processCSV(allRows, types, containerName, fileName)
-		}
-	}
-
-}
-
 var migrateCmd = &cobra.Command{
 	Use:     "migrate",
 	Short:   "Migrate from GridDB CE Export Files to Cloud",
 	Long:    "Use the export tool on your GridDB CE Instance to create the dir output of csv files and a properties file and then migrate that table to GridDB Cloud",
-	Example: "griddb-cloud-cli migrate <directory>",
-	Run: func(cmd *cobra.Command, args []string) {
-		migrate(args[0])
-	},
+	Example: "griddb-cloud-cli migrate griddb <directory>",
 }
