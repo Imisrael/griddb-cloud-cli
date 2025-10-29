@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/cqroot/prompt"
-	"github.com/spf13/viper"
 )
 
 type Columns struct {
@@ -101,30 +100,6 @@ var GridDBTypes = []string{
 	"TIMESTAMP_ARRAY",
 }
 
-func AddBasicAuth(req *http.Request) {
-	user := viper.GetString("cloud_username")
-	pass := viper.GetString("cloud_pass")
-	req.SetBasicAuth(user, pass)
-}
-
-func MakeNewRequest(method, endpoint string, body io.Reader) (req *http.Request, e error) {
-
-	if !(viper.IsSet("cloud_url")) {
-		log.Fatal("Please provide a `cloud_url` in your config file! You can copy this directly from your Cloud dashboard")
-	}
-
-	url := viper.GetString("cloud_url")
-	req, err := http.NewRequest(method, url+endpoint, body)
-	if err != nil {
-		fmt.Println("error with request:", err)
-		return req, err
-	}
-
-	AddBasicAuth(req)
-	req.Header.Add("Content-Type", "application/json")
-	return req, nil
-}
-
 // This check error is for the User prompt stuff
 func CheckErr(err error) {
 	if err != nil {
@@ -182,7 +157,7 @@ func CheckForErrors(resp *http.Response) {
 			log.Fatal("400 Error: " + errorMsg.ErrorMessage)
 		case 401:
 			fmt.Println(errorMsg.ErrorMessage)
-			log.Fatal("Authentication Error. Please check your username and password in your config file ")
+			log.Fatal("(401) Authentication Error. Please check your username and password in your config file ")
 		case 404:
 			log.Fatal("404 (not found) - Does this container exist?")
 		case 500:

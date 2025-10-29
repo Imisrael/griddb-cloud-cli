@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,6 +19,8 @@ var (
 		Long: `A series of commands to help you manage your cloud-based DB.
 Standouts include creating a container and graphing one using 'read graph' and 'create' respectfully`,
 	}
+
+	tokenManager *TokenManager
 )
 
 // Execute executes the root command.
@@ -27,8 +30,9 @@ func Execute() error {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+	tokenManager = NewTokenManager()
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.griddb.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/griddb-cloud-cli/config.yaml)")
 	viper.BindPFlag("author", RootCmd.PersistentFlags().Lookup("author"))
 	viper.BindPFlag("useViper", RootCmd.PersistentFlags().Lookup("viper"))
 	viper.SetDefault("author", "israel imru <imru@fixstars.com>")
@@ -41,18 +45,23 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 
-		home, err := os.UserHomeDir()
+		// in Linux, it's $HOME/.config
+		// For Macos, it's ~/Library/Application\ Support
+		configDir, err := os.UserConfigDir()
+		cobra.CheckErr(err)
+		appConfigDir := filepath.Join(configDir, "griddb-cloud-cli")
+		err = os.MkdirAll(appConfigDir, 0755)
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".cobra" (without extension).
-		viper.AddConfigPath(home)
+		viper.AddConfigPath(appConfigDir)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".griddb")
+		viper.SetConfigName("config") // Looks for config.yaml
 	}
 
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Please set a config file with the --config flag or set one in the default location $HOME/.griddb.yaml")
+		configDir, _ := os.UserConfigDir()
+		fmt.Fprintln(os.Stderr, "Please enter credentials inside of `config.yaml` file in this directory: ", configDir+"/griddb-cloud-cli")
 	}
 }
