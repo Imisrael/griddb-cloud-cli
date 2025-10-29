@@ -141,8 +141,7 @@ func (m *TokenManager) getBearerToken() error {
 		return err
 	}
 
-	err = json.Unmarshal(body, &m)
-	if err != nil {
+	if err := json.Unmarshal(body, &m); err != nil {
 		log.Fatalf("Error unmarshaling access token %s", err)
 	}
 
