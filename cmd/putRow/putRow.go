@@ -75,7 +75,11 @@ func ConvertType(colType, val string) string {
 		return "\"" + formatted + "\""
 
 	case "BOOL":
-		return val
+		b, err := strconv.ParseBool(val)
+		if err != nil {
+			log.Fatalf("Error parsing boolean value '%s': %v", val, err)
+		}
+		return strconv.FormatBool(b)
 
 	case "STRING":
 		return "\"" + val + "\""
