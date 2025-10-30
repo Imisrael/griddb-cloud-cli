@@ -98,8 +98,8 @@ func processCSV(reader *csv.Reader,
 			idx++
 		}
 		stringOfValues = stringOfValues + "]"
-		if idx%1000 == 0 {
-			fmt.Println("Inserting 1000 rows")
+		if idx%10000 == 0 {
+			fmt.Println("Inserting 10000 rows")
 			stringOfValues = "[" + stringOfValues + "]"
 			putMultiRows(stringOfValues, containerName)
 			idx = 0
