@@ -25,17 +25,6 @@ func init() {
 	deleteContainerCmd.Flags().BoolVarP(&force, "force", "f", false, "Force delete (no prompt)")
 }
 
-type ContainerToBeDeleted string
-
-func (c *ContainerToBeDeleted) wrapInDblQuotesAndBracket() {
-	*c = "\"" + *c + "\""
-	*c = "[" + *c + "]"
-}
-
-func (c *ContainerToBeDeleted) wrapInDblQuotes() {
-	*c = "\"" + *c + "\""
-}
-
 func deleteRequest(payload []byte) {
 	client := &http.Client{}
 
@@ -78,20 +67,21 @@ func deleteContainer(containerName string) {
 
 	info := containerInfo.GetContainerInfo(containerName)
 
-	var containerToDelete = ContainerToBeDeleted(containerName)
-	containerToDelete.wrapInDblQuotesAndBracket()
-	payload := []byte(containerToDelete)
+	payload, err := json.Marshal([]string{containerName})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if force {
 		deleteRequest(payload)
 		return
 	}
 
-	make, err := prompt.New().Ask("Delete Container? \n" + string(info)).
+	ans, err := prompt.New().Ask("Delete Container? \n" + string(info)).
 		Choose([]string{"NO", "YES"})
 	cmd.CheckErr(err)
 
-	if make == "NO" {
+	if ans == "NO" {
 		log.Fatal("Aborting")
 	} else {
 
