@@ -2,6 +2,7 @@ package deleteContainer
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -56,22 +57,21 @@ func deleteRequest(payload []byte) {
 }
 
 func deleteAllContainers() {
-	var cont strings.Builder
-	cont.WriteString("[")
-	for idx, val := range multipleContainers {
-		c := ContainerToBeDeleted(val)
-		c.wrapInDblQuotes()
-		if idx == 0 {
-			cont.WriteString(string(c))
-		}
-		cont.WriteString(", " + string(c))
+	payload, err := json.Marshal(multipleContainers)
+	if err != nil {
+		log.Fatal(err)
 	}
-	cont.WriteString("]")
-	fmt.Println(cont.String())
-	payload := []byte(cont.String())
+
+	if !force {
+		ans, err := prompt.New().Ask("Delete these containers?\n" + strings.Join(multipleContainers, "\n")).
+			Choose([]string{"NO", "YES"})
+		cmd.CheckErr(err)
+		if ans == "NO" {
+			log.Fatal("Aboring")
+		}
+	}
 
 	deleteRequest(payload)
-
 }
 
 func deleteContainer(containerName string) {
@@ -101,19 +101,24 @@ func deleteContainer(containerName string) {
 }
 
 var deleteContainerCmd = &cobra.Command{
-	Use:     "delete",
-	Short:   "Test your Connection with GridDB Cloud",
-	Long:    "A response of 200 is ideal, 401 is an auth error",
-	Example: "griddb-cloud-cli checkConnection",
+	Use:   "delete [container]",
+	Short: "Delete one or more containers",
+	Long:  "Delete a single container by name, or several at once with -m. Prompts for confirmation unless -f is set.",
+	Example: `griddb-cloud-cli delete device1
+griddb-cloud-cli delete -m "device1,device2,device3"
+griddb-cloud-cli delete -f -m "device1,device2"`,
+	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(multipleContainers) > 0 {
 			deleteAllContainers()
-		} else {
-			if strings.Contains(args[0], ",") {
-				log.Fatalln("Did you forget the '-m'/'multi' flag?")
-			}
-			deleteContainer(args[0])
+			return
 		}
-
+		if len(args) == 0 {
+			log.Fatalln("Give me a container name, or use -m for several")
+		}
+		if strings.Contains(args[0], ",") {
+			log.Fatalln("Did you forget the '-m'/'multi' flag?")
+		}
+		deleteContainer(args[0])
 	},
 }
