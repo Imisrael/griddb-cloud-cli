@@ -11,22 +11,22 @@ import (
 )
 
 func init() {
-	sqlCmd.AddCommand(createCmd)
-	createCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
-	createCmd.MarkFlagRequired("string")
+	sqlCmd.AddCommand(dmlCmd)
+	dmlCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
+	dmlCmd.MarkFlagRequired("string")
 }
 
-func runCreate() {
+func runUpdate() {
 	client := &http.Client{}
 
 	var s = SqlString(userSqlString)
 	s.wrapInDblQuoteAndStmt()
 	fmt.Println(s)
-
 	convert := []byte(s)
+
 	buf := bytes.NewBuffer(convert)
 
-	url := "/sql/ddl"
+	url := "/sql/dml/update"
 	req, err := cmd.MakeNewRequest("POST", url, buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
@@ -45,12 +45,12 @@ func runCreate() {
 	fmt.Println(string(body))
 }
 
-var createCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Run a sql command",
-	Long:    "Run a DDL Sql Command to Create or Alter or Update your SQL Tables",
-	Example: "\"CREATE TABLE IF NOT EXISTS pyIntPart2 (date TIMESTAMP NOT NULL PRIMARY KEY, value STRING) WITH (expiration_type='PARTITION',expiration_time=10,expiration_time_unit='DAY') PARTITION BY RANGE (date) EVERY (5, DAY);\"",
+var dmlCmd = &cobra.Command{
+	Use:     "dml",
+	Aliases: []string{"update"},
+	Short:   "Run DML statements (INSERT, UPDATE, DELETE)",
+	Example: `griddb-cloud-cli sql dml -s "DELETE FROM device1 WHERE temp > 100"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runCreate()
+		runUpdate()
 	},
 }

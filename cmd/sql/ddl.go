@@ -11,22 +11,22 @@ import (
 )
 
 func init() {
-	sqlCmd.AddCommand(updateCmd)
-	updateCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
-	updateCmd.MarkFlagRequired("string")
+	sqlCmd.AddCommand(ddlCmd)
+	ddlCmd.Flags().StringVarP(&userSqlString, "string", "s", "", "SQL STRING")
+	ddlCmd.MarkFlagRequired("string")
 }
 
-func runUpdate() {
+func runCreate() {
 	client := &http.Client{}
 
 	var s = SqlString(userSqlString)
 	s.wrapInDblQuoteAndStmt()
 	fmt.Println(s)
-	convert := []byte(s)
 
+	convert := []byte(s)
 	buf := bytes.NewBuffer(convert)
 
-	url := "/sql/dml/update"
+	url := "/sql/ddl"
 	req, err := cmd.MakeNewRequest("POST", url, buf)
 	if err != nil {
 		fmt.Println("Error making new request", err)
@@ -45,12 +45,12 @@ func runUpdate() {
 	fmt.Println(string(body))
 }
 
-var updateCmd = &cobra.Command{
-	Use:     "update",
-	Short:   "Run a sql command",
-	Long:    "Run a DML Sql Command to Query your GridDB Container",
-	Example: "sql update -s \"INSERT INTO pyIntPart2(date, value) VALUES (NOW(), 'fourth')\"",
+var ddlCmd = &cobra.Command{
+	Use:     "ddl",
+	Aliases: []string{"create"},
+	Short:   "Run DDL statements (CREATE TABLE, DROP TABLE, ALTER TABLE)",
+	Example: `griddb-cloud-cli sql ddl -s "DROP TABLE device1"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runUpdate()
+		runCreate()
 	},
 }

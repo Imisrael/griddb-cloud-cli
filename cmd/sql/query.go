@@ -57,9 +57,8 @@ func runQuery() {
 
 var queryCmd = &cobra.Command{
 	Use:     "query",
-	Short:   "Run a sql command",
-	Long:    "Run a DML Sql Command to Query your GridDB Container",
-	Example: "sql query -s \"SELECT * FROM pyIntPart2\"",
+	Short:   "Run a SELECT command",
+	Example: `griddb-cloud-cli sql query -s "SELECT * FROM device1 LIMIT 10"`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		runQuery()
